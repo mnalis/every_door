@@ -29,6 +29,7 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
   late final OsmChange building;
   bool manualLevels = false;
   bool buildingsNeedAddresses = true;
+  bool saved = false;
   late final FocusNode _levelsFocus;
   List<String> nearestLevels = [];
 
@@ -43,6 +44,7 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
       lon: widget.location.longitude,
       inside: 'Q55', // Netherlands
     );
+    saved = false;
     updateLevels();
   }
 
@@ -99,16 +101,21 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
       building.removeTag(OsmChange.kCheckedKey);
     final changes = ref.read(changesProvider);
     changes.saveChange(building);
+    saved = true;
     ref.read(needMapUpdateProvider).trigger();
     if (pop) Navigator.pop(context);
   }
 
   deleteAndClose() {
+    final changes = ref.read(changesProvider);
     if (building.isNew) {
-      final changes = ref.read(changesProvider);
       changes.deleteChange(building);
-      ref.read(needMapUpdateProvider).trigger();
+    } else {
+      building.deleted = true;
+      changes.saveChange(building);
     }
+    saved = true;
+    ref.read(needMapUpdateProvider).trigger();
     Navigator.pop(context);
   }
 
@@ -126,10 +133,9 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
     if (material == 'concrete' &&
         building['building:material:concrete'] == 'panels') material = 'panels';
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (widget.building != null) saveAndClose(false);
-        return true;
+    return PopScope(
+      onPopInvokedWithResult: (didPop, Object? result) {
+        if (didPop && widget.building != null && !saved) saveAndClose(false);
       },
       child: SingleChildScrollView(
         child: SafeArea(
@@ -210,7 +216,7 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
                                 style: kFieldTextStyle),
                           ),
                           RadioField(
-                              options: const ['1', '2', '3'],
+                              options: const ['0', '1', '2', '3'],
                               value: building['roof:levels'],
                               onChange: (value) {
                                 setState(() {
@@ -365,20 +371,27 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  PoiEditorPage(amenity: building)),
+                            builder: (context) =>
+                                PoiEditorPage(amenity: building),
+                            fullscreenDialog: true,
+                          ),
                         );
                       },
                       child: Text(loc.buildingMoreButton.toUpperCase() + '...'),
                     ),
-                    if (building.isNew && widget.building != null)
+                    if (!building.deleted &&
+                        widget.building != null &&
+                        building.canDelete)
                       TextButton(
                         child: Text(loc.editorDeleteButton.toUpperCase()),
                         onPressed: () async {
                           final answer = await showOkCancelAlertDialog(
                             context: context,
-                            title: loc.editorDeleteTitle(
-                                'building'), // TODO: better msg
+                            title: loc.editorDeleteTitle(loc
+                                .buildingX(building["addr:housenumber"] ??
+                                    building["addr:housename"] ??
+                                    '')
+                                .trim()),
                             okLabel: loc.editorDeleteButton,
                             isDestructiveAction: true,
                           );

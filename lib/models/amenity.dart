@@ -98,18 +98,30 @@ class OsmChange extends ChangeNotifier implements Comparable {
     return element!.id;
   }
 
-  bool get deleted => _deleted || (_mainKey?.startsWith(kDeleted) ?? false);
+  bool get deleted =>
+      _deleted ||
+      (_mainKey?.startsWith(kDeleted) ?? false) ||
+      (_mainKey?.startsWith(kBuildingDeleted) ?? false);
   bool get hardDeleted => _deleted;
   bool get isModified =>
-      newTags.isNotEmpty || newLocation != null || newNodes != null || deleted;
+      newTags.isNotEmpty ||
+      newLocation != null ||
+      newNodes != null ||
+      hardDeleted;
   bool get isConfirmed =>
       !deleted && (newTags.length == 1 && newTags.keys.first == kCheckedKey);
   bool get isNew => element == null;
   bool get isArea => element?.isArea ?? false;
   bool get isPoint => element?.isPoint ?? true;
   bool get canDelete =>
-      (element?.isPoint ?? true) && !(element?.isMember ?? false);
-  bool get canMove => canDelete && (isNew || kind != ElementKind.entrance);
+      (element?.isPoint ?? true) &&
+      (element == null || element?.isMember == IsMember.no);
+  bool get isBuilding =>
+      detectKind(getFullTags(), {ElementKind.building}) == ElementKind.building;
+  bool get canMove =>
+      (element?.isPoint ?? true) &&
+      (element?.isMember != IsMember.way) &&
+      (isNew || kind != ElementKind.entrance);
   ElementKind get kind => detectKind(getFullTags());
   bool get isIncomplete => needsMoreInfo(getFullTags());
 
@@ -160,6 +172,7 @@ class OsmChange extends ChangeNotifier implements Comparable {
   }
 
   bool hasTag(String key) => this[key] != null;
+  bool changedTag(String key) => newTags.containsKey(key);
 
   _updateMainKey() {
     _fullTagsCache = null;
@@ -173,10 +186,18 @@ class OsmChange extends ChangeNotifier implements Comparable {
 
   // Check date management.
   int get age => calculateAge(this[kCheckedKey]);
-  bool get isOld => age >= kOldAmenityDays;
+  bool get isOld => isCountedOld(age);
   bool get wasOld =>
-      !isNew && calculateAge(element?.tags[kCheckedKey]) >= kOldAmenityDays;
+      !isNew && isCountedOld(calculateAge(element?.tags[kCheckedKey]));
   bool get isCheckedToday => age <= 1;
+
+  bool isCountedOld(int age) {
+    final mk = _mainKey;
+    return age >=
+        (mk != null && isStructureTag(mk, this[mk])
+            ? kOldStructureDays
+            : kOldAmenityDays);
+  }
 
   check() {
     this[kCheckedKey] = kDateFormat.format(DateTime.now());
@@ -198,7 +219,11 @@ class OsmChange extends ChangeNotifier implements Comparable {
   set deleted(bool value) {
     if (value == deleted) return;
     if (isNew || !canDelete) {
-      togglePrefix(kDeleted);
+      // We use this for new because if they are not deleted higher up,
+      // they are meant to have this prefix.
+      togglePrefix((_mainKey?.endsWith("building") ?? false)
+          ? kBuildingDeleted
+          : kDeleted);
     } else {
       _deleted = value;
     }
@@ -281,7 +306,7 @@ class OsmChange extends ChangeNotifier implements Comparable {
       version: newVersion ?? 1,
       timestamp: DateTime.now(),
       tags: getFullTags(),
-      isMember: element?.isMember ?? false,
+      isMember: element?.isMember ?? IsMember.no,
       // overriding location call for toXML()
       center: newLocation ?? element?.center,
       downloaded: DateTime.now(),
@@ -361,6 +386,7 @@ class OsmChange extends ChangeNotifier implements Comparable {
     String? result = this['name'] ?? this['name:en'] ?? this['int_name'];
     if (result != null) return result;
     for (final e in getFullTags().entries) {
+      if (e.key == 'name:signed' || e.key.contains(':19')) continue;
       if (e.key.startsWith('name:')) return e.value;
     }
     return null;

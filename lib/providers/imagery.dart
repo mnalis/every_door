@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:every_door/helpers/tile_layers.dart';
@@ -17,6 +18,8 @@ final selectedImageryProvider =
     StateNotifierProvider<SelectedImageryProvider, Imagery>(
         (ref) => SelectedImageryProvider(ref));
 
+final StreamController<void> tileResetController = StreamController.broadcast();
+
 class ImageryProvider extends StateNotifier<Imagery> {
   static final _logger = Logger('ImageryProvider');
   final Ref _ref;
@@ -32,7 +35,7 @@ class ImageryProvider extends StateNotifier<Imagery> {
     type: ImageryType.bing,
     name: 'Bing Aerial Imagery',
     url:
-        'OMe8mqtOsgEax6JwKslCwSnfdUmUnnJ9djGBbfrgDh9lM+Lmp82Gh+3/rYFA6cHWZaGKWpq5CDrH0DfqjsPbILNcl6hfAWMnCS6b5l+jEqg=',
+        'ONmGm9hPmmIXyIpRK8Mx33q/TVG91lBWanmUE4XbZl42a+Hpr7b+hd+gqZBF9vXtTteFeLqaXS/JwQvk/eHDRbNcl6hfAWMnCS6b5l+jEqg=',
     encrypted: true,
     icon: 'https://osmlab.github.io/editor-layer-index/sources/world/Bing.png',
     attribution: '© Microsoft Bing',
@@ -45,7 +48,7 @@ class ImageryProvider extends StateNotifier<Imagery> {
     type: ImageryType.tms,
     name: 'Maxar Premium Imagery',
     url:
-        "EcKQpupFzHs7yZp0CdAT3zOWVWST2GB8eji2OtSHNANsdO7JnPHXw+riiIBA2aPDb5GFaKmySAOl/QDz57eaWI18qPwmdhpDeFLMmiDRZ4JQYGJbTzCq1On6IkNnrsnn5KvbL+1P3sAVur9nCCvaomT6i1Tv/WUFFD9zKG8gOf1TCN7mPWIhDOQteebNP0dP6UceyXhj0ti1rtdcs3HgT83Ihe5lXhR7BXdlY2jBz+BbzBpTrcTtI5t398LZP4wP",
+        "EcKQpupFzHs7yZp0CdAT3zOWVWST2GB8eji2OtSHNANsdO7JnPHXw+riiIBA2aPDb5GFaKmySAOl/QDz57eaWI18qPwmdhpDeFLMmiDRZ4JQYGJbTzCq1On6IkNnrsnn5KvbL+1P3sAVur9nCCvaomT6i1Tv/WUFFD9zKG8gOf1TCN7mPWIhDOQteeacbx0X60EeyXhg1tyyrtcJ53TgTsScje4/URAsVSNjMjTBz+dbzBpTrcTtI5t398LZP4wP",
     encrypted: true,
     icon: 'https://osmlab.github.io/editor-layer-index/sources/world/Maxar.png',
     attribution: '© DigitalGlobe',
@@ -53,7 +56,20 @@ class ImageryProvider extends StateNotifier<Imagery> {
     maxZoom: 22,
   ).decrypt();
 
-  ImageryProvider(this._ref) : super(maxarPremiumImagery) {
+  static final mapboxImagery = Imagery(
+    id: 'Mapbox',
+    type: ImageryType.tms,
+    name: 'Mapbox Satellite',
+    url:
+        "EcKQpupFzHsz359rFNAelnzeXi+ZgGVtMyCwNNTaeQFgK+nHlqvc3+K/iN0M0e3HYI2cJbm2TxXm5QT0ranPEswj6sVgagtKNkXyi2HZct8mbGBfTzGg3/T5LHVs4c/lqaviIIxV85VP4LkSJCPEi3vinH+s4lpJUycdGGFHPshdeNTDOW4DB6QHSbDKBzsRrRIdxCRM1If92rsopU+JPMud2IUmLx99Hw85cCGEj9Qopkdzi7OfUaYQpauIfd0e",
+    encrypted: true,
+    icon: 'https://osmlab.github.io/editor-layer-index/sources/world/MapBoxSatellite.png',
+    attribution: '© Mapbox',
+    minZoom: 1,
+    maxZoom: 22,
+  ).decrypt();
+
+  ImageryProvider(this._ref) : super(mapboxImagery) {
     _updateBingUrlTemplate();
     loaded = false;
     loadState();
@@ -64,7 +80,9 @@ class ImageryProvider extends StateNotifier<Imagery> {
         geoHasher.encode(location.longitude, location.latitude, precision: 4);
     final rows = await _ref.read(presetProvider).imageryQuery(geohash);
     List<Imagery> results = rows.map((row) => Imagery.fromJson(row)).toList();
-    results.add(maxarPremiumImagery);
+    results.add(mapboxImagery);
+    // Imagery is disabled by Maxar.
+    // results.add(maxarPremiumImagery);
     if (bingUrlTemplate != null) results.add(bingImagery);
     return results;
   }
@@ -76,7 +94,9 @@ class ImageryProvider extends StateNotifier<Imagery> {
       if (imageryId == bingImagery.id) {
         state = bingImagery;
       } else if (imageryId == maxarPremiumImagery.id) {
-        state = maxarPremiumImagery;
+        state = mapboxImagery;  // yes, we're silently changing the chosen imagery.
+      } else if (imageryId == mapboxImagery.id) {
+        state = mapboxImagery;
       } else {
         final imagery =
             await _ref.read(presetProvider).singleImageryQuery(imageryId);
@@ -150,6 +170,7 @@ class SelectedImageryProvider extends StateNotifier<Imagery> {
   toggle() {
     isOSM = !isOSM;
     state = isOSM ? kOSMImagery : _ref.watch(imageryProvider);
+    tileResetController.add(null);
     storeValue();
   }
 }

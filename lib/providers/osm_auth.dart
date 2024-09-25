@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/osm_oauth2_client.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final authProvider = StateNotifierProvider<OsmAuthController, String?>(
+final authProvider = StateNotifierProvider<OsmAuthController, OsmUserDetails?>(
     (_) => OsmAuthController());
 
 class OsmUserDetails {
@@ -66,7 +67,7 @@ class OsmAuthException implements Exception {
   String toString() => 'OsmAuthException($message)';
 }
 
-class OsmAuthController extends StateNotifier<String?> {
+class OsmAuthController extends StateNotifier<OsmUserDetails?> {
   static const kLoginKey = 'osmLogin';
   static const kPasswordKey = 'osmPassword';
   static final _logger = Logger('OsmAuthController');
@@ -87,8 +88,13 @@ class OsmAuthController extends StateNotifier<String?> {
 
     String? pwd;
     if (login != null) {
-      final secure = FlutterSecureStorage();
-      pwd = await secure.read(key: kPasswordKey);
+      final secure = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true));
+      try {
+        pwd = await secure.read(key: kPasswordKey);
+      } on PlatformException {
+        await secure.deleteAll();
+      }
     }
 
     if (pwd != null) {
@@ -98,7 +104,11 @@ class OsmAuthController extends StateNotifier<String?> {
       if (!isOAuth) login = null;
     }
 
-    state = login;
+    try {
+      state = await loadUserDetails();
+    } on OsmAuthException {
+      state = null;
+    }
   }
 
   logout() async {
@@ -106,7 +116,9 @@ class OsmAuthController extends StateNotifier<String?> {
     if (isOAuth) {
       await _helper.deleteToken();
     } else {
-      await FlutterSecureStorage().delete(key: kPasswordKey);
+      await FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true))
+          .delete(key: kPasswordKey);
     }
     await prefs.remove(kLoginKey);
     state = null;
@@ -118,7 +130,7 @@ class OsmAuthController extends StateNotifier<String?> {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       final info = await deviceInfo.androidInfo;
-      final sdk = info.version.sdkInt ?? 0;
+      final sdk = info.version.sdkInt;
       result = sdk >= 18;
     } else if (Platform.isIOS) {
       final info = await deviceInfo.iosInfo;
@@ -133,12 +145,7 @@ class OsmAuthController extends StateNotifier<String?> {
 
   storeLoginPassword(String login, String password) async {
     final headers = _getBasicAuthHeaders(login, password);
-    final response = await http.get(
-        Uri.https(kOsmEndpoint, '/api/0.6/user/details'),
-        headers: headers);
-    if (response.statusCode != 200) {
-      throw OsmAuthException('Wrong login or password');
-    }
+    final details = await loadUserDetails(headers);
 
     if (isOAuth) {
       await _helper.deleteToken();
@@ -147,9 +154,10 @@ class OsmAuthController extends StateNotifier<String?> {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(kLoginKey, login);
-    final secure = FlutterSecureStorage();
+    final secure = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true));
     await secure.write(key: kPasswordKey, value: password);
-    state = login;
+    state = details;
   }
 
   loginWithOAuth(BuildContext context) async {
@@ -163,7 +171,7 @@ class OsmAuthController extends StateNotifier<String?> {
       final details = await loadUserDetails(headers);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(kLoginKey, details.displayName);
-      state = details.displayName;
+      state = details;
     }
   }
 
@@ -198,8 +206,14 @@ class OsmAuthController extends StateNotifier<String?> {
     } else {
       final prefs = await SharedPreferences.getInstance();
       final login = prefs.getString(kLoginKey);
-      final secure = FlutterSecureStorage();
-      final password = await secure.read(key: kPasswordKey);
+      final secure = FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true));
+      String? password;
+      try {
+        password = await secure.read(key: kPasswordKey);
+      } on PlatformException {
+        await secure.deleteAll();
+      }
       if (login == null || password == null)
         throw StateError('No login and password found.');
       return _getBasicAuthHeaders(login, password);

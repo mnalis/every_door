@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/good_tags.dart';
+import 'package:every_door/helpers/pin_marker.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:every_door/models/note.dart';
 import 'package:every_door/providers/editor_mode.dart';
@@ -13,7 +14,9 @@ import 'package:every_door/providers/notes.dart';
 import 'package:every_door/providers/osm_data.dart';
 import 'package:every_door/providers/poi_filter.dart';
 import 'package:every_door/screens/editor/types.dart';
+import 'package:every_door/widgets/attribution.dart';
 import 'package:every_door/widgets/loc_marker.dart';
+import 'package:every_door/widgets/walkpath.dart';
 import 'package:every_door/widgets/zoom_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -40,7 +43,7 @@ class MapChooserPage extends ConsumerStatefulWidget {
 class _MapChooserPageState extends ConsumerState<MapChooserPage> {
   late LatLng center;
   List<OsmChange> nearestPOI = [];
-  List<OsmNote> nearestNotes = [];
+  List<BaseNote> nearestNotes = [];
   final controller = MapController();
   late final StreamSubscription<MapEvent> mapSub;
 
@@ -51,7 +54,7 @@ class _MapChooserPageState extends ConsumerState<MapChooserPage> {
     mapSub = controller.mapEventStream.listen((event) {
       if (event is MapEventMove) {
         setState(() {
-          center = event.targetCenter;
+          center = event.camera.center;
         });
       } else if (event is MapEventMoveEnd) {
         updateNearest();
@@ -96,7 +99,7 @@ class _MapChooserPageState extends ConsumerState<MapChooserPage> {
     // Fetch OSM notes as well.
     final notes = await ref
         .read(notesProvider)
-        .fetchOsmNotes(location, kFarVisibilityRadius);
+        .fetchAllNotes(center: location, radius: kNotesVisibilityRadius);
     // Update the map.
     setState(() {
       nearestPOI = data;
@@ -107,6 +110,7 @@ class _MapChooserPageState extends ConsumerState<MapChooserPage> {
   @override
   Widget build(BuildContext context) {
     final imagery = ref.watch(selectedImageryProvider);
+    final tileLayer = TileLayerOptions(imagery);
     final LatLng? trackLocation = ref.watch(geolocationProvider);
     final leftHand = ref.watch(editorSettingsProvider).leftHand;
     final loc = AppLocalizations.of(context)!;
@@ -129,79 +133,94 @@ class _MapChooserPageState extends ConsumerState<MapChooserPage> {
       body: FlutterMap(
         mapController: controller,
         options: MapOptions(
-          center: widget.location,
-          zoom: widget.closer ? 19.0 : 18.0,
+          initialCenter: widget.location,
+          initialZoom: widget.closer ? 19.0 : 18.0,
           minZoom: 17.0,
-          maxZoom: 20.0,
-          rotation: ref.watch(rotationProvider),
-          rotationThreshold: kRotationThreshold,
-          interactiveFlags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
-          plugins: [ZoomButtonsPlugin()],
+          maxZoom: kEditMaxZoom,
+          initialRotation: ref.watch(rotationProvider),
+          interactionOptions: InteractionOptions(
+            flags: InteractiveFlag.all -
+                InteractiveFlag.flingAnimation -
+                InteractiveFlag.rotate,
+            rotationThreshold: kRotationThreshold,
+          ),
         ),
-        nonRotatedLayers: [
-          ZoomButtonsOptions(
+        children: [
+          AttributionWidget(imagery),
+          TileLayer(
+            urlTemplate: tileLayer.urlTemplate,
+            wmsOptions: tileLayer.wmsOptions,
+            tileProvider: tileLayer.tileProvider,
+            minNativeZoom: tileLayer.minNativeZoom,
+            maxNativeZoom: tileLayer.maxNativeZoom,
+            maxZoom: tileLayer.maxZoom,
+            tileSize: tileLayer.tileSize,
+            tms: tileLayer.tms,
+            subdomains: tileLayer.subdomains,
+            additionalOptions: tileLayer.additionalOptions,
+            userAgentPackageName: tileLayer.userAgentPackageName,
+            reset: tileResetController.stream,
+          ),
+          PolylineLayer(
+            polylines: [
+              for (final drawing in nearestNotes
+                  .whereType<MapDrawing>()
+                  .where((d) => !d.deleting))
+                Polyline(
+                  points: drawing.path.nodes,
+                  color: drawing.style.color,
+                  strokeWidth: drawing.style.stroke / 3,
+                  pattern: drawing.style.dashed
+                      ? StrokePattern.dashed(segments: const [10, 13])
+                      : const StrokePattern.solid(),
+                  borderColor: drawing.style.casing.withAlpha(30),
+                  borderStrokeWidth: 2.0,
+                ),
+            ],
+          ),
+          WalkPathPolyline(),
+          LocationMarkerWidget(tracking: false),
+          if (trackLocation != null)
+            CircleLayer(
+              circles: [
+                CircleMarker(
+                  point: center,
+                  radius: 2.0,
+                  color: Colors.yellowAccent,
+                ),
+              ],
+            ),
+          CircleLayer(
+            circles: [
+              for (final note in nearestNotes.whereType<OsmNote>())
+                CircleMarker(
+                  point: note.location,
+                  radius: 9.0,
+                  color: Colors.grey,
+                ),
+              for (final poi in nearestPOI)
+                CircleMarker(
+                  point: poi.location,
+                  radius: 3.0,
+                  color: poi.kind == ElementKind.entrance
+                      ? Colors.black
+                      : !poi.isModified
+                          ? Colors.greenAccent
+                          : Colors.yellow,
+                ),
+            ],
+          ),
+          MarkerLayer(
+            markers: [PinMarker(center)],
+          ),
+          Scalebar(
+            alignment: !leftHand ? Alignment.bottomLeft : Alignment.bottomRight,
+          ),
+          ZoomButtonsWidget(
             alignment: leftHand ? Alignment.bottomLeft : Alignment.bottomRight,
             padding: EdgeInsets.symmetric(
               horizontal: 0.0,
               vertical: 100.0,
-            ),
-          ),
-        ],
-        nonRotatedChildren: [
-          buildAttributionWidget(imagery),
-        ],
-        children: [
-          TileLayerWidget(
-            options: buildTileLayerOptions(imagery),
-          ),
-          LocationMarkerWidget(tracking: false),
-          if (trackLocation != null)
-            CircleLayerWidget(
-              options: CircleLayerOptions(
-                circles: [
-                  CircleMarker(
-                    point: center,
-                    radius: 2.0,
-                    color: Colors.yellowAccent,
-                  ),
-                ],
-              ),
-            ),
-          MarkerLayerWidget(
-            options: MarkerLayerOptions(
-              markers: [
-                Marker(
-                  point: center,
-                  rotate: true,
-                  rotateOrigin: Offset(0.0, -5.0),
-                  rotateAlignment: Alignment.bottomCenter,
-                  anchorPos: AnchorPos.exactly(Anchor(15.0, 5.0)),
-                  builder: (ctx) =>
-                      Icon(Icons.location_pin, color: Colors.black),
-                ),
-              ],
-            ),
-          ),
-          CircleLayerWidget(
-            options: CircleLayerOptions(
-              circles: [
-                for (final note in nearestNotes)
-                  CircleMarker(
-                    point: note.location,
-                    radius: 9.0,
-                    color: Colors.grey,
-                  ),
-                for (final poi in nearestPOI)
-                  CircleMarker(
-                    point: poi.location,
-                    radius: 3.0,
-                    color: poi.kind == ElementKind.entrance
-                        ? Colors.black
-                        : !poi.isModified
-                            ? Colors.greenAccent
-                            : Colors.yellow,
-                  ),
-              ],
             ),
           ),
         ],

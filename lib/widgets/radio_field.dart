@@ -9,6 +9,8 @@ class RadioField extends StatefulWidget {
   final List<String>? values;
   final bool wrap;
   final bool multi;
+  final bool keepOrder;
+
   /// Keep the first options before all others. Warning: this implies the first option can never be a value.
   final bool keepFirst;
   final Function(String?)? onChange;
@@ -23,6 +25,7 @@ class RadioField extends StatefulWidget {
     this.wrap = false,
     this.multi = false,
     this.keepFirst = false,
+    this.keepOrder = false,
     this.onChange,
     this.onMultiChange,
   });
@@ -97,7 +100,8 @@ class _RadioFieldState extends State<RadioField> {
       int idx = widget.options.indexOf(value);
       labelsForValues[value] = idx >= 0 ? labels[idx] : Text(value);
     }
-    bool pushFirst = getMergedLength() >= 35 && !widget.wrap;
+    bool pushFirst =
+        !widget.keepOrder && !widget.wrap && getMergedLength() >= 35;
 
     final pills = [
       if (widget.keepFirst && widget.options.isNotEmpty)
@@ -182,6 +186,8 @@ class RadioPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor =
+        selected ? Theme.of(context).colorScheme.onPrimary : Colors.black;
     return Padding(
       padding: const EdgeInsets.only(right: 5.0),
       child: GestureDetector(
@@ -194,17 +200,10 @@ class RadioPill extends StatelessWidget {
           ),
           padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 5.0),
           child: IconTheme(
-            data: IconThemeData(
-              color:
-                  selected ? Theme.of(context).selectedRowColor : Colors.black,
-            ),
+            data: IconThemeData(color: iconColor),
             child: DefaultTextStyle(
               child: label,
-              style: kFieldTextStyle.copyWith(
-                color: selected
-                    ? Theme.of(context).selectedRowColor
-                    : Colors.black,
-              ),
+              style: kFieldTextStyle.copyWith(color: iconColor),
             ),
           ),
         ),

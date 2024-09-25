@@ -14,6 +14,7 @@ List<WebsiteProvider> websiteProviders = [
   TelegramProvider(),
   WhatsappProvider(),
   ViberProvider(),
+  TikTokProvider(),
 ];
 
 abstract class WebsiteProvider {
@@ -36,7 +37,8 @@ abstract class WebsiteProvider {
       required this.label});
 
   /// Whether user-entered value can be parsed.
-  bool isValid(String full);
+  /// Set url: true to make sure it's the proper provider for an URL.
+  bool isValid(String full, {bool url = false});
 
   /// Converts user-entered value into a proper tag value.
   String format(String value);
@@ -84,10 +86,11 @@ class UrlWebsiteProvider extends WebsiteProvider {
       return null;
     }
   }
+
   static const kValidWebsiteUrlSchemes = ["http", "https"];
 
   @override
-  bool isValid(String full) {
+  bool isValid(String full, {bool url = false}) {
     try {
       final uri = Uri.parse(full.replaceAll(' ', '').trim());
       if (uri.hasScheme && !kValidWebsiteUrlSchemes.contains(uri.scheme)) {
@@ -120,22 +123,26 @@ class UrlWebsiteProvider extends WebsiteProvider {
 
 class _ProviderHelper extends WebsiteProvider {
   final RegExp _regexp;
+  final RegExp? _regexpUrl;
   final String _format;
 
   _ProviderHelper({
     List<String>? prefixes,
-    required IconData icon,
-    required String key,
-    required String label,
+    required super.icon,
+    required super.key,
+    required super.label,
     required RegExp regexp,
+    RegExp? regexpUrl,
     String? format,
   })  : _regexp = regexp,
+        _regexpUrl = regexpUrl,
         _format = format ?? '%s',
-        super(
-            prefixes: prefixes ?? const [], icon: icon, key: key, label: label);
+        super(prefixes: prefixes ?? const []);
 
   @override
-  bool isValid(String full) => _regexp.hasMatch(full.trim());
+  bool isValid(String full, {bool url = false}) => !url
+      ? _regexp.hasMatch(full.trim())
+      : _regexpUrl?.hasMatch(full) ?? false;
 
   @override
   String? url(String value) {
@@ -169,8 +176,11 @@ class FacebookProvider extends _ProviderHelper {
           label: 'Facebook',
           prefixes: ['fb', 'facebook', 'face'],
           key: 'contact:facebook',
-          regexp: RegExp(r'(?:facebook(?:\.com)?/)?([^/ ]+)/?$'),
-          format: 'https://www.facebook.com/%s',
+          regexp: RegExp(
+              r'(?:facebook(?:\.com)?/)?((?:groups/|people/)?[^/? ]+(?:/[0-9]{8,})?)/?(?:\?.*)?$'),
+          regexpUrl: RegExp(
+              r'facebook\.com/((?:groups|people/)?[^/? ]+(?:/[0-9]{8,})?)/?(?:\?.*)?$'),
+          format: 'https://www.facebook.com/%s/',
         );
 }
 
@@ -181,7 +191,8 @@ class InstagramProvider extends _ProviderHelper {
           label: 'Instagram',
           prefixes: ['i', 'insta', 'instagram', 'инстаграм'],
           key: 'contact:instagram',
-          regexp: RegExp(r'(?:instagram(?:\.com)?/)?([^/ ]+)/?$'),
+          regexp: RegExp(r'(?:instagram(?:\.com)?/)?([^/ ?]+)/?(\?[\w=]+)?$'),
+          regexpUrl: RegExp(r'instagram\.com/([^/ ?]+)/?(\?[\w=]+)?$'),
           format: 'https://www.instagram.com/%s',
         );
 }
@@ -193,7 +204,8 @@ class VkProvider extends _ProviderHelper {
           label: 'Vk',
           prefixes: ['vk', 'вк'],
           key: 'contact:vk',
-          regexp: RegExp(r'(?:vk(?:ontakte)?(?:\.com|\.ru)?/)?([^/ ]+)/?$'),
+          regexp: RegExp(r'(?:vk(?:ontakte)?(?:\.com|\.ru)?/)?([^/? ]+)/?$'),
+          regexpUrl: RegExp(r'vk(?:ontakte)?\.(?:com|ru)/([^/? ]+)/?$'),
           format: 'https://vk.com/%s',
         );
 
@@ -216,6 +228,7 @@ class TwitterProvider extends _ProviderHelper {
           prefixes: ['tw', 'twitter'],
           key: 'contact:twitter',
           regexp: RegExp(r'(?:twitter(?:\.com)?/)?([^/ ]+)/?$'),
+          regexpUrl: RegExp(r'(?:twitter|//x)\.com/([^/ ]+)/?$'),
           format: 'https://twitter.com/%s',
         );
 }
@@ -228,6 +241,7 @@ class OkProvider extends _ProviderHelper {
           prefixes: ['ok', 'ок', 'однокл', 'одноклассники'],
           key: 'contact:ok',
           regexp: RegExp(r'(?:ok\.ru/)?([^/ ]+)/?$'),
+          regexpUrl: RegExp(r'ok\.ru/([^/ ]+)/?$'),
           format: 'https://ok.ru/%s',
         );
 }
@@ -239,7 +253,8 @@ class TelegramProvider extends _ProviderHelper {
           label: 'Telegram',
           prefixes: ['tg', 'telegram'],
           key: 'contact:telegram',
-          regexp: RegExp(r'(?://t.me/|^t.me/)?([^/ ]+)/?$'),
+          regexp: RegExp(r'(?://t.me/|^t.me/)?([^/? ]+)/?$'),
+          regexpUrl: RegExp(r'//t.me/([^/? ]+)/?$'),
           format: 'https://t.me/%s',
         );
 }
@@ -250,8 +265,14 @@ class WhatsappProvider extends _ProviderHelper {
           icon: LineIcons.whatSApp,
           label: 'WhatsApp',
           key: 'contact:whatsapp',
-          regexp: RegExp(r'(\+[\d -]+\d)'),
+          regexp: RegExp(r'(\d[\d -]{5,}\d)'),
         );
+
+  @override
+  String format(String value) => '+' + super.format(value);
+
+  @override
+  String display(String full) => format(full);
 }
 
 class ViberProvider extends _ProviderHelper {
@@ -263,6 +284,7 @@ class ViberProvider extends _ProviderHelper {
           key: 'contact:viber',
           regexp: RegExp(
               r'(?:chats\.viber\.com/|chatURI=)?(\+[\d -]+\d|[^/ ]+)/?$'),
+          regexpUrl: RegExp(r'chats\.viber\.com/(\+[\d -]+\d|[^/ ]+)/?$'),
         );
 }
 
@@ -273,7 +295,21 @@ class LinkedinProvider extends _ProviderHelper {
           label: 'LinkedIn',
           prefixes: ['linkedin', 'li'],
           key: 'contact:linkedin',
-          regexp: RegExp(r'(?:linkedin\.com/company/)?([^/ ]+)/?$'),
+          regexp: RegExp(r'(?:linkedin\.com/company/)?([^/? ]+)/?$'),
+          regexpUrl: RegExp(r'linkedin\.com/company/([^/? ]+)/?$'),
           format: 'https://www.linkedin.com/company/%s',
+        );
+}
+
+class TikTokProvider extends _ProviderHelper {
+  TikTokProvider()
+      : super(
+          icon: Icons.music_note,
+          label: 'TikTok',
+          prefixes: ['tiktok', 'tt'],
+          key: 'contact:tiktok',
+          regexp: RegExp(r'(?:tiktok\.com/)?@?([^@ /?]+)'),
+          regexpUrl: RegExp(r'tiktok\.com/@([^@ /?]+)'),
+          format: 'https://www.tiktok.com/@%s',
         );
 }

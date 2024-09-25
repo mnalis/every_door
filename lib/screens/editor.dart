@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:every_door/constants.dart';
 import 'package:every_door/fields/payment.dart';
+import 'package:every_door/fields/text.dart';
 import 'package:every_door/helpers/good_tags.dart';
+import 'package:every_door/helpers/pin_marker.dart';
+import 'package:every_door/models/address.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:every_door/models/field.dart';
 import 'package:every_door/models/preset.dart';
@@ -11,6 +14,7 @@ import 'package:every_door/providers/changes.dart';
 import 'package:every_door/providers/location.dart';
 import 'package:every_door/providers/last_presets.dart';
 import 'package:every_door/providers/need_update.dart';
+import 'package:every_door/providers/osm_data.dart';
 import 'package:every_door/providers/presets.dart';
 import 'package:every_door/screens/editor/map_chooser.dart';
 import 'package:every_door/helpers/tile_layers.dart';
@@ -98,7 +102,8 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
 
     _logger.info('Detected ($detect) preset $preset');
     if (preset!.fields.isEmpty) {
-      preset = await presets.getFields(preset!, locale: locale);
+      preset = await presets.getFields(preset!,
+          locale: locale, location: amenity.location);
       if (needsAddress(amenity.getFullTags())) {
         final bool needsStdFields =
             preset!.fields.length <= 1 || needsStandardFields();
@@ -107,6 +112,7 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
         if (amenity['building'] != null) {
           stdFields.removeWhere((e) => e.key == 'level');
         }
+
         // Move some fields to stdFields if present.
         if (!needsStdFields) {
           final hasStdFields = stdFields.map((e) => e.key).toSet();
@@ -121,6 +127,25 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
             }
           }
         }
+
+        // Add postcode to fields for buildings, moreFields for others.
+        // The reason for this hack is that our addresses don't transfer postcodes.
+        // But the addresses in the presets are indivisible, so we can't choose.
+        final postcodeString =
+            mounted ? AppLocalizations.of(context)?.buildingPostCode : null;
+        final postcodeField = TextPresetField(
+          key: "addr:postcode",
+          label: postcodeString ?? "Postcode",
+          keyboardType: TextInputType.visiblePassword,
+          capitalize: TextFieldCapitalize.all,
+        );
+        final kind = amenity.kind;
+        if (kind == ElementKind.building || kind == ElementKind.address)
+          preset!.fields.add(postcodeField);
+        else {
+          preset!.moreFields.insert(0, postcodeField);
+        }
+
         // Add opening_hours to moreFields if it's not anywhere.
         if (!preset!.fields.any((field) => field.key == 'opening_hours') &&
             !preset!.moreFields.any((field) => field.key == 'opening_hours')) {
@@ -167,6 +192,11 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
   }
 
   changeType() async {
+    final kind = amenity.kind;
+    if (kind == ElementKind.building || kind == ElementKind.address) {
+      return;
+    }
+
     final locale = Localizations.localeOf(context);
     final newPreset = await Navigator.push(
       context,
@@ -206,13 +236,15 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
     // Save changes and close.
     final changes = ref.read(changesProvider);
     changes.saveChange(amenity);
+    if (amenity.hasTag('addr:floor'))
+      ref.read(osmDataProvider).updateFloorNumbering(amenity.location);
     Navigator.pop(context);
     ref.read(needMapUpdateProvider).trigger();
   }
 
   deleteAndClose() {
     if (widget.amenity != null) {
-      // No use deleting an amenity that just've been created.
+      // No use deleting an amenity that just have been created.
       final changes = ref.read(changesProvider);
       if (amenity.isNew) {
         changes.deleteChange(amenity);
@@ -223,6 +255,84 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
       ref.read(needMapUpdateProvider).trigger();
     }
     Navigator.pop(context);
+  }
+
+  deletionDialog(AppLocalizations loc) async {
+    // Check that the address is important.
+    bool importantAddress = false;
+    final tags = amenity.getFullTags();
+    final addr = StreetAddress.fromTags(tags);
+    if (addr.isNotEmpty) {
+      final osmData = ref.read(osmDataProvider);
+      importantAddress = await osmData.isUniqueAddress(addr, amenity.location);
+    }
+
+    if (!mounted) return;
+
+    const int kCancel = 0;
+    const int kDelete = 1;
+    const int kKeepAddress = 2;
+    int? answer;
+
+    // Since AdaptiveDialog adds a cancel button on iOS, we need to hide it there.
+    // This line copies the clause directly.
+    bool addCancel =
+        AdaptiveDialog.instance.defaultStyle.isMaterial(Theme.of(context));
+
+    if (importantAddress) {
+      answer = await showModalActionSheet<int>(
+        context: context,
+        title: loc.editorDeleteTitle(amenity.typeAndName),
+        actions: [
+          SheetAction(
+            key: kKeepAddress,
+            label: loc.editorDeleteKeepAddressButton,
+            isDefaultAction: true,
+            icon: Icons.delete_outline,
+          ),
+          SheetAction(
+            key: kDelete,
+            label: loc.editorDeleteButton,
+            icon: Icons.delete_forever,
+          ),
+          if (addCancel)
+            SheetAction(
+              key: kCancel,
+              label: MaterialLocalizations.of(context).cancelButtonLabel,
+              icon: Icons.arrow_back,
+            ),
+        ],
+      );
+    } else {
+      answer = await showModalActionSheet<int>(
+        context: context,
+        title: loc.editorDeleteTitle(amenity.typeAndName),
+        actions: [
+          SheetAction(
+            key: kDelete,
+            label: loc.editorDeleteButton,
+            isDestructiveAction: true,
+            isDefaultAction: true,
+            icon: Icons.delete_forever,
+          ),
+          if (addCancel)
+            SheetAction(
+              key: kCancel,
+              label: MaterialLocalizations.of(context).cancelButtonLabel,
+              icon: Icons.arrow_back,
+            ),
+        ],
+      );
+    }
+
+    if (answer == kDelete) {
+      deleteAndClose();
+    } else if (answer == kKeepAddress) {
+      // Delete all tags except address.
+      for (final k in amenity.getFullTags().keys)
+        if (!k.startsWith('addr:') || k == 'addr:floor') amenity.removeTag(k);
+      saveAndClose();
+    }
   }
 
   confirmDisused(BuildContext context) async {
@@ -249,18 +359,24 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
 
     final loc = AppLocalizations.of(context)!;
-    return WillPopScope(
-      onWillPop: () async {
-        if (!modified)
-          return true;
-        else {
+    return PopScope(
+      canPop: !modified,
+      onPopInvokedWithResult: (didPop, res) async {
+        if (didPop) return;
+
+        final navigator = Navigator.of(context);
+        bool canPop = true;
+        if (modified) {
           final result = await showOkCancelAlertDialog(
             context: context,
             isDestructiveAction: true,
             title: loc.editorCloseTitle,
             message: loc.editorCloseMessage,
           );
-          return result == OkCancelResult.ok;
+          canPop = result == OkCancelResult.ok;
+        }
+        if (canPop) {
+          navigator.pop();
         }
       },
       child: Scaffold(
@@ -387,13 +503,15 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
 
   Widget buildTopButtons(context) {
     final loc = AppLocalizations.of(context)!;
+    final kind = amenity.kind;
+
     return Container(
       padding: EdgeInsets.only(right: 5.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           // Display "closed" button just for amenities.
-          if (isAmenityTags(amenity.getFullTags()))
+          if (kind == ElementKind.amenity)
             MaterialButton(
               color: amenity.isDisused ? Colors.brown : Colors.orange,
               textColor: Colors.white,
@@ -410,23 +528,21 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
           MaterialButton(
             color: Colors.red,
             textColor: Colors.white,
-            child:
-                Text(amenity.deleted ? loc.editorRestore : loc.editorMissing),
+            child: Text(amenity.deleted
+                ? loc.editorRestore
+                : kind == ElementKind.building
+                    ? loc.editorDeleteBuilding
+                    : loc.editorMissing),
             onPressed: () async {
               if (amenity.deleted) {
                 setState(() {
                   amenity.deleted = false;
                 });
               } else {
-                final answer = await showOkCancelAlertDialog(
-                  context: context,
-                  title: loc.editorDeleteTitle(amenity.typeAndName),
-                  okLabel: loc.editorDeleteButton,
-                  isDestructiveAction: true,
-                );
-                if (answer == OkCancelResult.ok) {
+                if (kind != ElementKind.building)
+                  deletionDialog(loc);
+                else
                   deleteAndClose();
-                }
               }
             },
           ),
@@ -455,11 +571,13 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
             child: FlutterMap(
               mapController: mapController,
               options: MapOptions(
-                center: amenity.location,
-                zoom: 17,
-                interactiveFlags: 0,
-                rotation: ref.watch(rotationProvider),
-                allowPanningOnScrollingParent: false,
+                initialCenter: amenity.location,
+                initialZoom: 17,
+                initialRotation: ref.watch(rotationProvider),
+                interactionOptions:
+                    InteractionOptions(flags: InteractiveFlag.none),
+                keepAlive:
+                    true, // see https://github.com/fleaflet/flutter_map/issues/1892
                 onTap: !amenity.canMove
                     ? null
                     : (pos, center) async {
@@ -474,53 +592,45 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
                           setState(() {
                             amenity.location = newLocation;
                           });
-                          mapController.move(newLocation, mapController.zoom);
+                          mapController.move(
+                              newLocation, mapController.camera.zoom);
                         }
                       },
               ),
               children: [
-                TileLayerWidget(options: buildTileLayerOptions(kOSMImagery)),
-                MarkerLayerWidget(
-                    options: MarkerLayerOptions(markers: [
-                  if (amenity.canMove)
-                    Marker(
-                      point: amenity.location,
-                      rotate: true,
-                      rotateOrigin: Offset(12.0, -5.0),
-                      rotateAlignment: Alignment.bottomLeft,
-                      anchorPos: AnchorPos.exactly(Anchor(138.0, 5.0)),
-                      width: 150.0,
-                      height: 30.0,
-                      builder: (ctx) => Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(Icons.location_pin),
-                          SizedBox(width: 2.0),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(5.0),
+                TileLayerOptions(kOSMImagery).buildTileLayer(),
+                MarkerLayer(
+                  markers: [
+                    if (amenity.canMove)
+                      Marker(
+                        point: amenity.location,
+                        rotate: true,
+                        alignment: Alignment(0.84, -0.7),
+                        width: 150.0,
+                        height: 30.0,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Icon(Icons.location_pin),
+                            SizedBox(width: 2.0),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(5.0),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10.0, vertical: 5.0),
+                              child: Text(loc.editorMove),
                             ),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 5.0),
-                            child: Text(loc.editorMove),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  if (!amenity.canMove)
-                    Marker(
-                      rotate: true,
-                      rotateOrigin: Offset(0.0, -5.0),
-                      rotateAlignment: Alignment.bottomCenter,
-                      point: amenity
-                          .location, // mapController.center throws late init exception
-                      anchorPos: AnchorPos.exactly(Anchor(15.0, 5.0)),
-                      builder: (ctx) =>
-                          Icon(Icons.location_pin, color: Colors.red.shade900),
-                    ),
-                ])),
+                    if (!amenity.canMove)
+                      PinMarker(amenity.location,
+                          color: Colors.red.shade900, blend: false),
+                  ],
+                ),
               ],
             ),
           ),

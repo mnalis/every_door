@@ -5,7 +5,7 @@
   "@loadingPresets": {},
   "loadingChanges": "Änderungen werden geladen…",
   "@loadingChanges": {},
-  "loadingLocation": "Standort bestimmen…",
+  "loadingLocation": "Standort wird bestimmt…",
   "@loadingLocation": {},
   "loadingChangesFailed": "Fehler beim Laden der Änderungen",
   "@loadingChangesFailed": {},
@@ -91,7 +91,7 @@
   "@settingsPurgedObsoleteTitle": {},
   "settingsPurgedAllTitle": "Daten gelöscht",
   "@settingsPurgedAllTitle": {},
-  "settingsPurgedMessage": "{count,plural, =1{{count} Element gelöscht}, =few{{count} Elemente gelöscht}, =other{{count} Elemente gelöscht}}",
+  "settingsPurgedMessage": "{count,plural, =1{{count} Element gelöscht} few{{count} Elemente gelöscht} other{{count} Elemente gelöscht}}",
   "@settingsPurgedMessage": {},
   "settingsUploads": "Ausstehende Uploads",
   "@settingsUploads": {},
@@ -137,7 +137,7 @@
   "@accountChangesets": {},
   "accountUnreadMail": "Ungelesene Nachrichten",
   "@accountUnreadMail": {},
-  "changesCount": "{count,plural, =1{{count} Änderung}, =few{{count} Änderungen}, =other{{count} Änderungen}}",
+  "changesCount": "{count,plural, =1{{count} Änderung} few{{count} Änderungen} other{{count} Änderungen}}",
   "@changesCount": {},
   "changesUploadedTitle": "Hochgeladen",
   "@changesUploadedTitle": {},
@@ -473,7 +473,7 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{{count} Element heruntergeladen.}, =few{{count} Elemente heruntergeladen.}, =other{{count} Elemente heruntergeladen.}}",
+  "dataDownloadedCount": "{count,plural, =1{{count} Element heruntergeladen.} few{{count} Elemente heruntergeladen.} other{{count} Elemente heruntergeladen.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -610,7 +610,7 @@
   "@notesCloseMessage": {
     "description": "Confirmation message when pressed a close note button."
   },
-  "notesClose": "Kartenhinweis lösen",
+  "notesClose": "Kartenhinweis schließen",
   "@notesClose": {
     "description": "Button title for closing a note."
   },
@@ -813,7 +813,7 @@
   "@hashtagsConfirm": {
     "description": "Label for a switch tile for confirmation of hashtags on pressing the upload button."
   },
-  "years": "{count,plural, =1{{count} Jahr}, =few{{count} Jahre}, =other{{count} Jahre}}",
+  "years": "{count,plural, =1{{count} Jahr} few{{count} Jahre} other{{count} Jahre}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -823,5 +823,143 @@
   "fieldDirectionSet": "Festlegen",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Block",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Dein Kommentar",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldPaymentAround": "Übliche Optionen in der Umgebung",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Falscher Modus, prüfe auf Duplikate",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldHeightMeters": "Länge in Metern erwartet, z. B. 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldPaymentLocal": "Lokale Optionen",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Meine Standardwerte sind besser",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Die selben Tags zum Kartieren verwenden",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Kartenzahlung",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Dieser Objekttyp wird nicht unterstützt",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldHeightFeet": "Länge in Fuß erwartet, z. B. 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldPaymentChoose": "Andere lokale Tags wählen…",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldNameLangSearch": "Sprache finden",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentGlobal": "Globale Optionen",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldHeightAny": "Länge erwartet, z. B. 5.4 oder 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "apiStatusUploadingNotes": "Notizen hochladen",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawChangeTool": "Werkzeug ändern",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawScribble": "Zeichnen",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawEraser": "Radiergummi",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawTrack": "Feldweg",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawFootway": "Fußweg",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawCyclewayShared": "Radspur",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawPath": "Pfad",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "Radweg",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawWall": "Mauer",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawFence": "Zaun",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawUndo": "Rückgängig machen",
+  "@drawUndo": {},
+  "drawRoad": "Straße",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawPower": "Stromleitung",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawStream": "Bach",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "notesDelete": "Löschen",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawCulvert": "Wasserdurchlass",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "Löschen, aber Adresse behalten",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "fieldWebsiteQR": "QR Code scannen",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "editorDeleteBuilding": "Abgerissen",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
   }
 }

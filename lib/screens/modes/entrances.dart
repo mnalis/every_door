@@ -17,11 +17,13 @@ import 'package:every_door/screens/editor/building.dart';
 import 'package:every_door/screens/editor/entrance.dart';
 import 'package:every_door/screens/editor/map_chooser.dart';
 import 'package:every_door/screens/settings.dart';
+import 'package:every_door/widgets/attribution.dart';
 import 'package:every_door/widgets/loc_marker.dart';
 import 'package:every_door/widgets/map_drag_create.dart';
 import 'package:every_door/widgets/multi_hit.dart';
 import 'package:every_door/widgets/status_pane.dart';
 import 'package:every_door/widgets/track_button.dart';
+import 'package:every_door/widgets/walkpath.dart';
 import 'package:every_door/widgets/zoom_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -64,15 +66,16 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
   }
 
   onMapEvent(MapEvent event) {
-    bool fromController = event.source == MapEventSource.mapController;
+    bool fromController = event.source == MapEventSource.mapController ||
+        event.source == MapEventSource.nonRotatedSizeChange;
     if (event is MapEventWithMove) {
-      center = event.center;
+      center = event.camera.center;
       if (!fromController) {
-        ref.read(trackingProvider.state).state = false;
-        ref.read(zoomProvider.state).state = event.zoom;
-        if (event.zoom < kEditMinZoom) {
+        ref.read(trackingProvider.notifier).state = false;
+        ref.read(zoomProvider.notifier).state = event.camera.zoom;
+        if (event.camera.zoom < kEditMinZoom) {
           // Switch navigation mode on
-          ref.read(navigationModeProvider.state).state = true;
+          ref.read(navigationModeProvider.notifier).state = true;
         }
         setState(() {
           // redraw center marker
@@ -80,18 +83,18 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
       }
     } else if (event is MapEventMoveEnd) {
       if (!fromController) {
-        ref.read(effectiveLocationProvider.notifier).set(event.center);
+        ref.read(effectiveLocationProvider.notifier).set(event.camera.center);
       }
     } else if (event is MapEventRotateEnd) {
       if (event.source != MapEventSource.mapController) {
-        double rotation = controller.rotation;
+        double rotation = controller.camera.rotation;
         while (rotation > 200) rotation -= 360;
         while (rotation < -200) rotation += 360;
         if (rotation.abs() < kRotationThreshold) {
-          ref.read(rotationProvider.state).state = 0.0;
+          ref.read(rotationProvider.notifier).state = 0.0;
           controller.rotate(0.0);
         } else {
-          ref.read(rotationProvider.state).state = rotation;
+          ref.read(rotationProvider.notifier).state = rotation;
         }
       }
     }
@@ -221,7 +224,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
         label = label.substring(0, 10) + '…';
         break;
       }
-      label = label.replaceFirst(RegExp(r'\s*\d+[^\d]*$'), '…');
+      label = label.replaceFirst(RegExp(r'\s*\d+\D*$'), '…');
     }
     return label;
   }
@@ -322,6 +325,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
   Widget build(BuildContext context) {
     final location = ref.read(effectiveLocationProvider);
     final imagery = ref.watch(selectedImageryProvider);
+    final tileLayer = TileLayerOptions(imagery);
     final leftHand = ref.watch(editorSettingsProvider).leftHand;
     final LatLng? trackLocation = ref.watch(geolocationProvider);
     final loc = AppLocalizations.of(context)!;
@@ -329,21 +333,21 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
     // When tracking location, move map and notify the poi list.
     ref.listen<LatLng?>(geolocationProvider, (_, LatLng? location) {
       if (location != null && ref.watch(trackingProvider)) {
-        controller.move(location, controller.zoom);
+        controller.move(location, controller.camera.zoom);
         ref.read(effectiveLocationProvider.notifier).set(location);
       }
     });
 
     // Rotate the map according to the global rotation value.
     ref.listen(rotationProvider, (_, double newValue) {
-      if ((newValue - controller.rotation).abs() >= 1.0)
+      if ((newValue - controller.camera.rotation).abs() >= 1.0)
         controller.rotate(newValue);
     });
 
     // When turning the tracking on, move the map immediately.
     ref.listen(trackingProvider, (_, bool newState) {
       if (trackLocation != null && newState) {
-        controller.move(trackLocation, controller.zoom);
+        controller.move(trackLocation, controller.camera.zoom);
         ref.read(effectiveLocationProvider.notifier).set(trackLocation);
       }
     });
@@ -352,7 +356,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
       updateNearest();
     });
     ref.listen(effectiveLocationProvider, (_, LatLng next) {
-      controller.move(next, controller.zoom);
+      controller.move(next, controller.camera.zoom);
       updateNearest();
       setState(() {
         center = next;
@@ -371,25 +375,45 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
               key: _mapKey,
               mapController: controller,
               options: MapOptions(
-                center: center,
-                zoom: ref.watch(zoomProvider),
+                initialCenter: center,
+                initialZoom: ref.watch(zoomProvider),
                 minZoom: kEditMinZoom - 0.1,
                 maxZoom: kEditMaxZoom,
-                rotation: ref.watch(rotationProvider),
-                rotationThreshold: kRotationThreshold,
-                interactiveFlags: InteractiveFlag.drag |
-                    InteractiveFlag.pinchZoom |
-                    InteractiveFlag.pinchMove |
-                    InteractiveFlag.rotate,
-                plugins: [
-                  MapDragCreatePlugin(),
-                  MultiHitMarkerLayerPlugin(),
-                  ZoomButtonsPlugin(),
-                  OverlayButtonPlugin(),
-                ],
+                initialRotation: ref.watch(rotationProvider),
+                interactionOptions: InteractionOptions(
+                  flags: InteractiveFlag.all - InteractiveFlag.flingAnimation,
+                  rotationThreshold: kRotationThreshold,
+                ),
               ),
-              layers: [
-                MultiHitMarkerLayerOptions(
+              children: [
+                TileLayer(
+                  urlTemplate: tileLayer.urlTemplate,
+                  wmsOptions: tileLayer.wmsOptions,
+                  tileProvider: tileLayer.tileProvider,
+                  minNativeZoom: tileLayer.minNativeZoom,
+                  maxNativeZoom: tileLayer.maxNativeZoom,
+                  maxZoom: tileLayer.maxZoom,
+                  tileSize: tileLayer.tileSize,
+                  tms: tileLayer.tms,
+                  subdomains: tileLayer.subdomains,
+                  additionalOptions: tileLayer.additionalOptions,
+                  userAgentPackageName: tileLayer.userAgentPackageName,
+                  reset: tileResetController.stream,
+                ),
+                AttributionWidget(imagery),
+                WalkPathPolyline(faint: true),
+                LocationMarkerWidget(),
+                if (newLocation != null)
+                  CircleLayer(
+                    circles: [
+                      CircleMarker(
+                        point: newLocation!,
+                        radius: 5.0,
+                        color: Colors.red,
+                      ),
+                    ],
+                  ),
+                MultiHitMarkerLayer(
                   markers: [
                     for (final building in nearest
                         .where((el) => getOurKind(el) == ElementKind.building))
@@ -399,23 +423,21 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                         width: 120.0,
                         height: 60.0,
                         rotate: true,
-                        builder: (BuildContext context) {
-                          return Center(
-                            child: Container(
-                              decoration: makeLabelDecoration(building),
-                              padding: EdgeInsets.symmetric(
-                                vertical: 5.0,
-                                horizontal: 10.0,
-                              ),
-                              constraints: BoxConstraints(minWidth: 35.0),
-                              child: Text(
-                                makeBuildingLabel(building),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: kFieldFontSize),
-                              ),
+                        child: Center(
+                          child: Container(
+                            decoration: makeLabelDecoration(building),
+                            padding: EdgeInsets.symmetric(
+                              vertical: 5.0,
+                              horizontal: 10.0,
                             ),
-                          );
-                        },
+                            constraints: BoxConstraints(minWidth: 35.0),
+                            child: Text(
+                              makeBuildingLabel(building),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: kFieldFontSize),
+                            ),
+                          ),
+                        ),
                       ),
                     for (final address in nearest
                         .where((el) => getOurKind(el) == ElementKind.address))
@@ -425,26 +447,24 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                         rotate: true,
                         width: 90.0,
                         height: 50.0,
-                        builder: (BuildContext context) {
-                          return Center(
+                        child: Center(
+                          child: Container(
+                            padding: EdgeInsets.all(10.0),
+                            color: Colors.transparent,
                             child: Container(
-                              padding: EdgeInsets.all(10.0),
-                              color: Colors.transparent,
-                              child: Container(
-                                decoration: makeLabelDecoration(address),
-                                padding: EdgeInsets.symmetric(
-                                  vertical: 3.0,
-                                  horizontal: 3.0,
-                                ),
-                                child: Text(
-                                  makeBuildingLabel(address),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 14),
-                                ),
+                              decoration: makeLabelDecoration(address),
+                              padding: EdgeInsets.symmetric(
+                                vertical: 3.0,
+                                horizontal: 3.0,
+                              ),
+                              child: Text(
+                                makeBuildingLabel(address),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 14),
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     for (final entrance in nearest
                         .where((el) => getOurKind(el) == ElementKind.entrance))
@@ -453,18 +473,16 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                         point: entrance.location,
                         width: 50.0,
                         height: 50.0,
-                        builder: (BuildContext context) {
-                          return Center(
+                        child: Center(
+                          child: Container(
+                            padding: EdgeInsets.all(10.0),
+                            color: Colors.transparent,
                             child: Container(
-                              padding: EdgeInsets.all(10.0),
-                              color: Colors.transparent,
-                              child: Container(
-                                decoration: makeLabelDecoration(entrance),
-                                child: SizedBox(width: 20.0, height: 20.0),
-                              ),
+                              decoration: makeLabelDecoration(entrance),
+                              child: SizedBox(width: 20.0, height: 20.0),
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                   ],
                   onTap: (tapped) {
@@ -473,64 +491,63 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                     chooseEditorToOpen(objects);
                   },
                 ),
-              ],
-              nonRotatedLayers: [
-                MapDragCreateOptions(
+                DragButtonWidget(
                   mapKey: _mapKey,
-                  buttons: [
-                    DragButton(
-                        icon: Icons.house,
-                        tooltip: loc.entrancesAddBuilding,
-                        bottom: 20.0,
-                        left: leftHand ? null : 10.0 + safePadding.left,
-                        right: !leftHand ? null : 10.0 + safePadding.right,
-                        onDragEnd: (pos) {
-                          editBuilding(null, pos);
-                        },
-                        onTap: () async {
-                          final pos = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  MapChooserPage(location: location),
-                            ),
-                          );
-                          if (pos != null) editBuilding(null, pos);
-                        }),
-                    DragButton(
-                        icon: Icons.sensor_door,
-                        tooltip: loc.entrancesAddEntrance,
-                        bottom: 20.0,
-                        left: !leftHand ? null : 10.0 + safePadding.left,
-                        right: leftHand ? null : 10.0 + safePadding.right,
-                        onDragStart: () {
-                          if (savedZoom == null) {
-                            savedZoom = controller.zoom;
-                            controller.move(
-                                controller.center, savedZoom! + 0.7);
-                          }
-                        },
-                        onDragEnd: (pos) {
-                          if (savedZoom != null) {
-                            controller.move(controller.center, savedZoom!);
-                            savedZoom = null;
-                          }
-                          editEntrance(null, pos);
-                        },
-                        onTap: () async {
-                          final pos = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  MapChooserPage(location: location),
-                            ),
-                          );
-                          if (pos != null) editEntrance(null, pos);
-                        }),
-                  ],
+                  button: DragButton(
+                      icon: Icons.house,
+                      tooltip: loc.entrancesAddBuilding,
+                      alignment: !leftHand
+                          ? Alignment.bottomLeft
+                          : Alignment.bottomRight,
+                      onDragEnd: (pos) {
+                        editBuilding(null, pos);
+                      },
+                      onTap: () async {
+                        final pos = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MapChooserPage(location: location),
+                          ),
+                        );
+                        if (pos != null) editBuilding(null, pos);
+                      }),
+                ),
+                DragButtonWidget(
+                  mapKey: _mapKey,
+                  button: DragButton(
+                      icon: Icons.sensor_door,
+                      tooltip: loc.entrancesAddEntrance,
+                      alignment: leftHand
+                          ? Alignment.bottomLeft
+                          : Alignment.bottomRight,
+                      onDragStart: () {
+                        if (savedZoom == null) {
+                          savedZoom = controller.camera.zoom;
+                          controller.move(
+                              controller.camera.center, savedZoom! + 0.7);
+                        }
+                      },
+                      onDragEnd: (pos) {
+                        if (savedZoom != null) {
+                          controller.move(controller.camera.center, savedZoom!);
+                          savedZoom = null;
+                        }
+                        editEntrance(null, pos);
+                      },
+                      onTap: () async {
+                        final pos = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MapChooserPage(location: location),
+                          ),
+                        );
+                        if (pos != null) editEntrance(null, pos);
+                      }),
                 ),
                 // Settings button
-                OverlayButtonOptions(
+                OverlayButtonWidget(
                   alignment: leftHand ? Alignment.topRight : Alignment.topLeft,
                   padding: EdgeInsets.symmetric(
                     horizontal: 0.0,
@@ -547,7 +564,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                   },
                 ),
                 // Tracking button
-                OverlayButtonOptions(
+                OverlayButtonWidget(
                   alignment: leftHand ? Alignment.topLeft : Alignment.topRight,
                   padding: EdgeInsets.symmetric(
                     horizontal: 0.0,
@@ -565,7 +582,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                   },
                   onLongPressed: () {
                     if (ref.read(rotationProvider) != 0.0) {
-                      ref.read(rotationProvider.state).state = 0.0;
+                      ref.read(rotationProvider.notifier).state = 0.0;
                       controller.rotate(0.0);
                     } else {
                       ref
@@ -574,7 +591,7 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                     }
                   },
                 ),
-                ZoomButtonsOptions(
+                ZoomButtonsWidget(
                   alignment:
                       leftHand ? Alignment.bottomLeft : Alignment.bottomRight,
                   padding: EdgeInsets.symmetric(
@@ -583,25 +600,6 @@ class _EntrancesPaneState extends ConsumerState<EntrancesPane> {
                     vertical: 100.0,
                   ),
                 ),
-              ],
-              nonRotatedChildren: [
-                buildAttributionWidget(imagery),
-              ],
-              children: [
-                TileLayerWidget(
-                  options: buildTileLayerOptions(imagery),
-                ),
-                LocationMarkerWidget(),
-                if (newLocation != null)
-                  CircleLayerWidget(
-                    options: CircleLayerOptions(circles: [
-                      CircleMarker(
-                        point: newLocation!,
-                        radius: 5.0,
-                        color: Colors.red,
-                      ),
-                    ]),
-                  ),
               ],
             ),
             ApiStatusPane(),

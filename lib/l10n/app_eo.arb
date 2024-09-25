@@ -1078,28 +1078,28 @@
   "@faqYellowContent": {},
   "faqFloors": "Ĉu etaĝoj '3' kaj '/3' estas la samaj?",
   "@faqFloors": {},
-  "dataDownloadedCount": "{count,plural, =1{Elŝutiĝis {count} elemento.}, =few{Elŝutiĝis {count} elementoj.}, =other{Elŝutiĝis {count} elementoj.}}",
+  "dataDownloadedCount": "{count,plural, =1{Elŝutiĝis {count} elemento.} few{Elŝutiĝis {count} elementoj.} other{Elŝutiĝis {count} elementoj.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
       "count": {}
     }
   },
-  "years": "{count,plural, =1{{count} jaro}, =few{{count} jaroj}, =other{{count} jaroj}}",
+  "years": "{count,plural, =1{{count} jaro} few{{count} jaroj} other{{count} jaroj}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
       "count": {}
     }
   },
-  "settingsPurgedMessage": "{count,plural, =1{Forviŝiĝis {count} element}, =few{Forviŝiĝis {count} elementoj}, =other{Forviŝiĝis {count} elementoj}}",
+  "settingsPurgedMessage": "{count,plural, =1{Forviŝiĝis {count} element} few{Forviŝiĝis {count} elementoj} other{Forviŝiĝis {count} elementoj}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
       "count": {}
     }
   },
-  "changesCount": "{count,plural, =1{{count} ŝanĝo}, =few{{count} ŝanĝoj}, =other{{count} ŝanĝoj}}",
+  "changesCount": "{count,plural, =1{{count} ŝanĝo} few{{count} ŝanĝoj} other{{count} ŝanĝoj}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -1129,5 +1129,55 @@
   "faqCheckmarksContent": "Ĉi tiuj estas markoj, kiujn oni konfirmis datumojn pri agrablaĵoj. Ili aldonas la etikedon `check_date` kun la aktuala dato.\n\nLa ideo de la kontrolaj markoj estas, ke, ekzemple, vi enketis la duonon de la urbo unuafoje. Tiam post unu monato vi revenis kaj denove enketis. Vi devas iel marki, ke vi vidas la agrablaĵon, sed nenio ŝanĝiĝis pri ĝi. Jen la markilo: vi frapetas ĝin kaj daŭrigas.\n\nLa marko restas kontrolita dum du monatoj. Post tio vi eble esploros la agrablaĵojn denove.",
   "@faqCheckmarksContent": {},
   "faqTaggingContent": "Kial objekto mankas en la redaktoro? Kiam ĉi tiuj blankaj punktoj estas montritaj en la mikromapanta reĝimo? Kiel objektoj estas ordigitaj?\n\nRespondoj al ĉiuj ĉi tiuj demandoj estas en [good_tags.dart](https://github.com/zverik/every_door/blob/main/lib/helpers/good_tags.dart). Jen kion vi povas rigardi:\n\n* La ŝlosila ordo por la ĉefa etikedo - Listo `kMainKeys`.\n* Kiuj objektoj estas elŝutitaj - funkcio `isGoodTags`.\n* Kio estas konsiderata agrablaĵo - funkcio `isAmenityTags`.\n* Kiuj punktoj estas alkroĉitaj al kiaj manieroj - funkcio `detectSnap`.\n* Kiam mikromapanta objekto estas nekompleta - funkcio `needsMoreInfo`.",
-  "@faqTaggingContent": {}
+  "@faqTaggingContent": {},
+  "notesDelete": "Forigi",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawPower": "Elektrodukto",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "fieldNameLangSearch": "Trovi la lingvon",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "drawFence": "Barilo",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawCulvert": "Kulverto",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "drawWall": "Muro",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawRoad": "Vojo",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "notesComment": "Via komento",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "drawChangeTool": "Ŝanĝi ilon",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawFootway": "Trotuaro",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawUndo": "Malfari",
+  "@drawUndo": {},
+  "fieldWebsiteQR": "Skani QR-kodon",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "drawCycleway": "Biciklovojo",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  }
 }

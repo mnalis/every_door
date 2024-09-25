@@ -101,7 +101,7 @@
   "@settingsPurgedObsoleteTitle": {},
   "settingsPurgedAllTitle": "Удалили данные",
   "@settingsPurgedAllTitle": {},
-  "settingsPurgedMessage": "{count,plural, =1{Очистили {count} объект}, =few{Очистили {count} объекта}, =other{Очистили {count} объектов}}",
+  "settingsPurgedMessage": "{count,plural, =1{Очистили {count} объект} few{Очистили {count} объекта} other{Очистили {count} объектов}}",
   "@settingsPurgedMessage": {},
   "changesSwipeLeft": "Смахните влево для отмены правки",
   "@changesSwipeLeft": {},
@@ -149,7 +149,7 @@
   "@accountChangesets": {},
   "accountUnreadMail": "Непрочитанной почты",
   "@accountUnreadMail": {},
-  "changesCount": "{count,plural, =1{{count} правка}, =few{{count} правки}, =other{{count} правок}}",
+  "changesCount": "{count,plural, =1{{count} правка} few{{count} правки} other{{count} правок}}",
   "@changesCount": {},
   "changesUploadedTitle": "Отправлено",
   "@changesUploadedTitle": {},
@@ -412,7 +412,7 @@
   "@dataDownloadFailed": {
     "description": "Alert title for the error happened during a data download."
   },
-  "dataDownloadedCount": "{count,plural, =1{Загружен {count} объект.}, =few{Загружены {count} объекта.}, =other{Загружены {count} объектов.}}",
+  "dataDownloadedCount": "{count,plural, =1{Загружен {count} объект.} few{Загружены {count} объекта.} other{Загружены {count} объектов.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -732,7 +732,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} год}, =few{{count} года}, =other{{count} лет}}",
+  "years": "{count,plural, =1{{count} год} few{{count} года} other{{count} лет}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -778,5 +778,143 @@
   "fieldDirectionSet": "Выбрать",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Блок",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "fieldHeightMeters": "Длина в метрах, например 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "Длина в футах, например 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "notesComment": "Ваш комментарий",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldHeightAny": "Это длина: например, 5.4 или 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "fieldPaymentAround": "Частые варианты вокруг",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Не тот режим, возможны дубликаты",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldPaymentLocal": "Ваши теги для местности",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Мои теги лучше",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Использовать те же теги",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Платежи картой",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Тип этого объекта не поддерживается",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldPaymentChoose": "Выбрать другие местные теги...",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldPaymentGlobal": "Теги по умолчанию",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldNameLangSearch": "Найти язык",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "apiStatusUploadingNotes": "Отправляю заметки",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawUndo": "Отменить",
+  "@drawUndo": {},
+  "drawChangeTool": "Инструмент",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawRoad": "Дорога",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawFootway": "Тротуар",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawPath": "Тропа",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "Велодорожка",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawCyclewayShared": "Велополоса",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawWall": "Стена",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawFence": "Забор",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawPower": "ЛЭП",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawStream": "Ручей",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "drawScribble": "Рисовать",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawEraser": "Стереть",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawTrack": "Грунтовка",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "notesDelete": "Удалить",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawCulvert": "Труба",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "Удалить, но оставить адрес",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "fieldWebsiteQR": "Отсканируйте QR-код",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "editorDeleteBuilding": "Снесено",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
   }
 }

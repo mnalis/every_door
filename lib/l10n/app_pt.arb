@@ -106,7 +106,7 @@
   "@settingsPurgedAllTitle": {
     "description": "Notification title for cleaning all downloaded data from the cache."
   },
-  "settingsPurgedMessage": "{count,plural, =1{{count} elemento eliminado}, =few{{count} elementos eliminados}, =other{{count} elementos eliminados}}",
+  "settingsPurgedMessage": "{count,plural, =1{{count} elemento eliminado} few{{count} elementos eliminados} other{{count} elementos eliminados}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -303,7 +303,7 @@
   "@buildingTypeHouse": {},
   "buildingTypeRetail": "retalho",
   "@buildingTypeRetail": {},
-  "entranceIsUnit": "Guardar o número do apartamento em \"addr:unit\"",
+  "entranceIsUnit": "Guardar o número do andar em \"addr:unit\"",
   "@entranceIsUnit": {
     "description": "Label for a switch to use addr:unit instead of addr:flats."
   },
@@ -343,7 +343,7 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{{count} elemento descarregado.}, =few{{count} elementos descarregados.}, =other{{count} elementos descarregados.}}",
+  "dataDownloadedCount": "{count,plural, =1{{count} elemento descarregado.} few{{count} elementos descarregados.} other{{count} elementos descarregados.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -360,11 +360,11 @@
   "@loadingPresets": {
     "description": "Loading screen message for loading presets."
   },
-  "loadingStart": "Inicializando…",
+  "loadingStart": "A inicializar…",
   "@loadingStart": {
     "description": "Initial message for the loading screen, virtually unseen."
   },
-  "loadingChangesFailed": "Erro ao carregar alterações",
+  "loadingChangesFailed": "Erro ao carregar as alterações",
   "@loadingChangesFailed": {
     "description": "Loading screen notification title for when loading changes has failed."
   },
@@ -440,7 +440,7 @@
   "@editorMarkChecked": {
     "description": "Tooltip for a button to mark the amenity checked without changing properties."
   },
-  "filterNoAddresses": "Nenhuma morada próxima",
+  "filterNoAddresses": "Nenhuma morada nas proximidades",
   "@filterNoAddresses": {
     "description": "An error message for no addresses nearby, used on filter pane and in address editor."
   },
@@ -649,7 +649,7 @@
   "@aboutReportIssue": {
     "description": "Button title to open the app's GitHub issue page."
   },
-  "aboutHelpImprove": "Ajuda a melhorar {appTitle}",
+  "aboutHelpImprove": "Ajuda a melhorar o {appTitle}",
   "@aboutHelpImprove": {
     "description": "Title for the Help improve section on the About page.",
     "placeholders": {
@@ -712,13 +712,13 @@
   "@entranceType": {
     "description": "Label for entrance type (value of entrance=* tag) in the form. Keep it short."
   },
-  "addressHouseNumber": "Casa",
+  "addressHouseNumber": "Nº porta",
   "@addressHouseNumber": {
     "description": "Label for addr:housenumber in the form. Keep it short."
   },
   "entranceTypeStaircase": "escadaria",
   "@entranceTypeStaircase": {},
-  "entranceTypeHome": "casa",
+  "entranceTypeHome": "nº porta",
   "@entranceTypeHome": {},
   "faqEntrance": "Como adicionar uma entrada a um edifício?",
   "@faqEntrance": {},
@@ -740,7 +740,7 @@
   "@apiStatusUpdatingDB": {
     "description": "Text displayed when the app is updating the database with downloaded objects."
   },
-  "faqLetters": "Posso usar letras numa referência ou número de apartamento?",
+  "faqLetters": "Posso usar letras numa referência ou número de andar?",
   "@faqLetters": {},
   "enableLocationMessage": "Concede o acesso à localização para a aplicação no painel de configurações que será mostrado.",
   "@enableLocationMessage": {
@@ -767,13 +767,13 @@
   "@fieldHoursClosedPH": {
     "description": "Switch label for PH off."
   },
-  "faqMapTinyContent": "Porque a questão não é essa. Só verificas o teu posicionamento e moves o mapa para ajustar. Vê a lista de serviços abaixo, ordenada pela distância a que ficam ti.\n\nO mapa fica maior quando editas os serviços longe da tua localização, embora a aplicação tenha sido feita para editar as coisas que estás a ver.",
+  "faqMapTinyContent": "Porque o objetivo não é esse. Só verificas o teu posicionamento e moves o mapa para ajustar. Vê a lista de serviços abaixo, ordenada pela distância a que ficam da tua localização.\n\nO mapa fica maior quando editas os serviços longe da tua localização, embora a aplicação tenha sido feita para editar as coisas que estás a ver.",
   "@faqMapTinyContent": {},
   "faqTagging": "Todas as perguntas sobre etiquetagem",
   "@faqTagging": {},
   "faqCheckmarks": "Para que servem as marcas de verificado?",
   "@faqCheckmarks": {},
-  "faqCheckmarksContent": "As marcas de verificado indicam que os dados do serviços foram confirmados. Eles adicionam a etiqueta `check_date` com a data atual.\n\nA ideia por trás da marca de verificado é que, digamos, mapeaste metade da cidade na primeira vez. Então, um mês depois, foste mapear novamente nos mesmos sítios. É preciso marcar de alguma forma que o serviço continua a existir no mesmo local e não houve nenhuma alteração. Isso é a marca de verificado: tocas nele e continuas.\n\nA marca de verificação fica ativa por dois meses. Depois disso, podes mapear os serviços novamente.",
+  "faqCheckmarksContent": "As marcas de verificado indicam que os dados do serviços foram confirmados. Estas adicionam a etiqueta `check_date` com a data atual.\n\nA ideia por trás da marca de verificado é que, digamos, mapeaste metade da cidade na primeira vez. Então, um mês depois, foste mapear novamente nos mesmos sítios. É preciso marcar de alguma forma que o serviço continua a existir no mesmo local e não houve nenhuma alteração. Isso é a marca de verificado: tocas nele e continuas.\n\nA marca de verificação fica ativa por dois meses. Depois disso, podes mapear os serviços novamente.",
   "@faqCheckmarksContent": {},
   "faqLettersContent": "Se o teclado numérico não puder ser alterado para um teclado completo, verifica as configurações da aplicação. Eles estão localizados no botão do canto superior esquerdo. Ativa o \"Teclado numérico alargado\" lá.",
   "@faqLettersContent": {},
@@ -811,7 +811,7 @@
   "@accountFieldPassword": {
     "description": "Label for the OSM password."
   },
-  "changesCount": "{count,plural, =1{{count} alteração}, =few{{count} alterações}, =other{{count} alterações}}",
+  "changesCount": "{count,plural, =1{{count} alteração} few{{count} alterações} other{{count} alterações}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -940,7 +940,7 @@
   "@fieldCardsAccepted": {
     "description": "Payment field label for cards accepted."
   },
-  "loadingTooMuchData": "Limpar os dados descarregados nas Configurações tornar o editor mais rápido.",
+  "loadingTooMuchData": "Limpar os dados descarregados nas Configurações torna o editor mais rápido.",
   "@loadingTooMuchData": {
     "description": "Message of a warning alert when there's too much data downloaded."
   },
@@ -984,7 +984,7 @@
   "@entrancesAddEntrance": {
     "description": "Tooltip for the button to add an entrance node."
   },
-  "fieldAddressTap": "Toca em uma morada",
+  "fieldAddressTap": "Toca numa morada",
   "@fieldAddressTap": {
     "description": "Title for the pane when a user can tap an address to choose it."
   },
@@ -1031,7 +1031,7 @@
   },
   "buildingTypeGarage": "garagem",
   "@buildingTypeGarage": {},
-  "entranceFlats": "Apartamentos",
+  "entranceFlats": "Andares",
   "@entranceFlats": {
     "description": "Label for addr:flats in the form. Keep it short."
   },
@@ -1087,7 +1087,7 @@
       }
     }
   },
-  "warningTooOld": "Serviço tem {years} anos",
+  "warningTooOld": "O serviço tem {years}",
   "@warningTooOld": {
     "description": "Warning message for when an amenity is many years old.",
     "placeholders": {
@@ -1097,14 +1097,14 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} ano}, =few{{count} anos}, =other{{count} anos}}",
+  "years": "{count,plural, =1{{count} ano} few{{count} anos} other{{count} anos}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
       "count": {}
     }
   },
-  "notesCancelMessage": "Cancelar a tua nota OSM?",
+  "notesCancelMessage": "Cancelar a sua nota OSM?",
   "@notesCancelMessage": {
     "description": "Message when cancelling an OSM note that has non-empty content."
   },
@@ -1114,7 +1114,7 @@
   },
   "faqYellow": "Porque é que alguns números de porta estão a amarelo?",
   "@faqYellow": {},
-  "faqYellowContent": "Os rótulos não amarelos no modo de Entradas e pontos brancos no modo de Micromapeamento significam que faltam alguns atributos importantes. Por exemplo:\n\n* Os edifícios devem ter o número de andares.\n* As entradas devem ter um tipo e, para escadas, intervalo dos apartamentos.\n* Os assentos devem ter informação sobre o material e se têm encosto.\n* As árvores devem ter o tipo e ciclo de folhagem.",
+  "faqYellowContent": "Os rótulos não amarelos no modo de Entradas e pontos brancos no modo de Micromapeamento significam que faltam alguns atributos importantes. Por exemplo:\n\n* Os edifícios devem ter o número de pisos.\n* As entradas devem ter um tipo e, para escadas, intervalo dos andares.\n* Os bancos devem ter informação sobre o material e se têm encosto.\n* As árvores devem ter o tipo e ciclo de folhagem.",
   "@faqYellowContent": {},
   "hashtagsLabel": "Palavras para hashtags",
   "@hashtagsLabel": {
@@ -1131,5 +1131,143 @@
   "fieldDirectionSet": "Configurar",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Bloco",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Nota para outros editores",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldHeightMeters": "Espera-se comprimento em metros, por ex.: 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "Espera-se comprimento em pés, por ex.: 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldHeightAny": "Espera-se comprimento, por ex.: 5.4 ou 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "fieldPaymentAround": "Opções mais comuns",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Modo incorreto, verifique se há duplicados",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldPaymentLocal": "Opções locais",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Meus valores padrão são melhores",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Utilizar as mesmas etiquetas para mapear",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Pagamento com cartão",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Este tipo de objeto não é compatível",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldPaymentChoose": "Escolhe diferentes etiquetas locais...",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldNameLangSearch": "Procurar idioma",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentGlobal": "Valores padrão globais",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "apiStatusUploadingNotes": "A enviar notas",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawCyclewayShared": "Faixa de bicicletas",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawWall": "Parede",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawFence": "Vedação",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawPower": "Linha elétrica",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawStream": "Ribeiro",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "drawUndo": "Desfazer",
+  "@drawUndo": {},
+  "drawChangeTool": "Alterar ferramenta",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawPath": "Caminho",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "Ciclovia",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawScribble": "Rabiscar",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawEraser": "Borracha",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawRoad": "Estrada",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawTrack": "Trilho",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawFootway": "Via pedonal",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawCulvert": "Galeria",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "notesDelete": "Eliminar",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "editorDeleteBuilding": "Demolido",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
+  },
+  "fieldWebsiteQR": "Digitalizar um código QR",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "editorDeleteKeepAddressButton": "Eliminar, mas manter a morada",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
   }
 }

@@ -98,7 +98,7 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{已下載 {count} 物件。}, =few{已下載 {count} 物件。}, =other{已下載 {count} 物件。}}",
+  "dataDownloadedCount": "{count,plural, =1{已下載 {count} 物件。} few{已下載 {count} 物件。} other{已下載 {count} 物件。}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -407,7 +407,7 @@
   "@settingsPurgedAllTitle": {
     "description": "Notification title for cleaning all downloaded data from the cache."
   },
-  "settingsPurgedMessage": "{count,plural, =1{已清除 {count} 物件}, =few{已清除 {count} 物件}, =other{已清除 {count} 物件}}",
+  "settingsPurgedMessage": "{count,plural, =1{已清除 {count} 物件} few{已清除 {count} 物件} other{已清除 {count} 物件}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -514,7 +514,7 @@
   "@accountUnreadMail": {
     "description": "Label for the number of unread private messages a user has."
   },
-  "changesCount": "{count,plural, =1{{count} 個變更}, =few{{count} 個變更}, =other{{count} 個變更}}",
+  "changesCount": "{count,plural, =1{{count} 個變更} few{{count} 個變更} other{{count} 個變更}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -669,7 +669,7 @@
   "@fieldHoursWeekdays": {
     "description": "Space-separated list of 7 weekday abbreviations, from Monday to Sunday."
   },
-  "fieldHoursClosedPH": "公共假日休息",
+  "fieldHoursClosedPH": "國定假期休息",
   "@fieldHoursClosedPH": {
     "description": "Switch label for PH off."
   },
@@ -868,7 +868,7 @@
   },
   "entranceTypeEmergency": "緊急",
   "@entranceTypeEmergency": {},
-  "addressHouseNumber": "房屋",
+  "addressHouseNumber": "房屋號碼",
   "@addressHouseNumber": {
     "description": "Label for addr:housenumber in the form. Keep it short."
   },
@@ -876,7 +876,7 @@
   "@addressHouseNotEmpty": {
     "description": "Validator message for addr:housenumber."
   },
-  "addressUnit": "套房",
+  "addressUnit": "套房號碼",
   "@addressUnit": {
     "description": "Label for addr:unit in the form. Keep it short."
   },
@@ -1101,7 +1101,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} 年}, =few{{count} 年}, =other{{count} 年}}",
+  "years": "{count,plural, =1{{count} 年} few{{count} 年} other{{count} 年}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1131,5 +1131,143 @@
   "fieldCardsOnly": "僅限卡片",
   "@fieldCardsOnly": {
     "description": "Payment field label for cards only."
+  },
+  "addressBlock": "封鎖",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "你的評論",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "warningUnsupported": "不支援此種類型",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "warningWrongMode": "模式錯誤，請檢查是否有重覆",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldNameLangSearch": "尋找語言",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentTitle": "卡片付款",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "fieldHeightAny": "預期長度，例如：5.4 或是 7.4",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "fieldPaymentAround": "附近有常見選項",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "fieldPaymentUseSame": "畫地圖時使用相同標籤",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentUseGlobal": "我的預設更好",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentLocal": "本地選項",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentGlobal": "全域預設",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldPaymentChoose": "選擇不同在地化標籤…",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "apiStatusUploadingNotes": "上傳註解",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "fieldHeightMeters": "預期以公尺為單位的長度，例如 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "預期以英呎為單位的長度，例如 7.4",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "editorDeleteBuilding": "已經拆除",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
+  },
+  "fieldWebsiteQR": "掃描 QR code",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "drawEraser": "消除",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawTrack": "路跡",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawUndo": "復原",
+  "@drawUndo": {},
+  "drawChangeTool": "變動工具",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "notesDelete": "刪除",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawFence": "圍籬",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawWall": "牆壁",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "刪除，但保留地址資訊",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "drawRoad": "道路",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawScribble": "塗鴨",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawPath": "路徑",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "單車道",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawCyclewayShared": "單車車道",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawPower": "電線",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawFootway": "人行通道",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawStream": "溝",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "drawCulvert": "涵管",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
   }
 }

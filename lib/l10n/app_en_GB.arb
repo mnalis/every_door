@@ -7,7 +7,7 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{Downloaded {count} element.}, =few{Downloaded {count} elements.}, =other{Downloaded {count} elements.}}",
+  "dataDownloadedCount": "{count,plural, =1{Downloaded {count} element.} few{Downloaded {count} elements.} other{Downloaded {count} elements.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -501,7 +501,7 @@
   "@settingsPurgedObsoleteTitle": {
     "description": "Notification title for cleaning obsolete data from the cache."
   },
-  "settingsPurgedMessage": "{count,plural, =1{Purged {count} element}, =few{Purged {count} elements}, =other{Purged {count} elements}}",
+  "settingsPurgedMessage": "{count,plural, =1{Purged {count} element} few{Purged {count} elements} other{Purged {count} elements}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -586,7 +586,7 @@
   "@accountAuthErrorMessage": {
     "descripton": "Message for the alert dialog about an incorrect password."
   },
-  "changesCount": "{count,plural, =1{{count} change}, =few{{count} changes}, =other{{count} changes}}",
+  "changesCount": "{count,plural, =1{{count} change} few{{count} changes} other{{count} changes}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -1107,7 +1107,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} year}, =few{{count} years}, =other{{count} years}}",
+  "years": "{count,plural, =1{{count} year} few{{count} years} other{{count} years}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1131,5 +1131,143 @@
   "fieldDirectionSet": "Set",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Block",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Your comment",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldHeightMeters": "Expecting length in meters, e.g. 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "Expecting length in feet, e.g. 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldHeightAny": "Expecting length, e.g. 5.4 or 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "warningWrongMode": "Wrong mode, check for duplicates",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "warningUnsupported": "This object type is not supported",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldPaymentLocal": "Local Options",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "My defaults are better",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Use the same tags for mapping",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Card Payment",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "fieldPaymentChoose": "Choose different local tags...",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldNameLangSearch": "Find language",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentGlobal": "Global Defaults",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldPaymentAround": "Common Options Around",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "apiStatusUploadingNotes": "Uploading notes",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawChangeTool": "Change tool",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawEraser": "Eraser",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawUndo": "Undo",
+  "@drawUndo": {},
+  "drawScribble": "Scribble",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawRoad": "Road",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawFootway": "Footway",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawTrack": "Track",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawStream": "Stream",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "drawCycleway": "Cycleway",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawCyclewayShared": "Cycle lane",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawFence": "Fence",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawPath": "Path",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawWall": "Wall",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawPower": "Power line",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "editorDeleteBuilding": "Demolished",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
+  },
+  "fieldWebsiteQR": "Scan a QR Code",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "notesDelete": "Delete",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawCulvert": "Culvert",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "Delete, but keep the address",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
   }
 }

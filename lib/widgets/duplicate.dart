@@ -5,6 +5,7 @@ import 'package:every_door/helpers/equirectangular.dart';
 import 'package:every_door/helpers/good_tags.dart';
 import 'package:every_door/helpers/poi_warnings.dart';
 import 'package:every_door/models/amenity.dart';
+import 'package:every_door/providers/editor_mode.dart';
 import 'package:every_door/providers/osm_data.dart';
 import 'package:every_door/screens/editor.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class DuplicateWarning extends ConsumerStatefulWidget {
   final OsmChange amenity;
 
-  const DuplicateWarning({required this.amenity, Key? key}) : super(key: key);
+  const DuplicateWarning({required this.amenity, super.key});
 
   @override
   ConsumerState<DuplicateWarning> createState() => _DuplicateWarningState();
@@ -25,12 +26,15 @@ class _DuplicateWarningState extends ConsumerState<DuplicateWarning> {
   static final _logger = Logger('DuplicateWarning');
   OsmChange? possibleDuplicate;
   Timer? duplicateTimer;
+  String? warning;
 
   @override
   initState() {
     super.initState();
     widget.amenity.addListener(onAmenityChange);
-    startDuplicateSearch();
+    Future.delayed(Duration.zero, () {
+      onAmenityChange();
+    });
   }
 
   @override
@@ -60,8 +64,24 @@ class _DuplicateWarningState extends ConsumerState<DuplicateWarning> {
     });
   }
 
+  bool isWrongMode() {
+    final isAmenity = isAmenityTags(widget.amenity.getFullTags(true));
+    final mode = ref.read(editorModeProvider);
+    return (isAmenity && mode == EditorMode.micromapping) ||
+        (!isAmenity && mode == EditorMode.poi);
+  }
+
   onAmenityChange() {
     startDuplicateSearch();
+    final loc = AppLocalizations.of(context)!;
+    String? newWarning = getWarningForAmenity(widget.amenity, loc);
+    if (newWarning == null && isWrongMode()) newWarning = loc.warningWrongMode;
+
+    if (mounted) {
+      setState(() {
+        warning = newWarning;
+      });
+    }
   }
 
   @override
@@ -72,7 +92,6 @@ class _DuplicateWarningState extends ConsumerState<DuplicateWarning> {
         : distance(possibleDuplicate!.location, widget.amenity.location)
             .round();
     final loc = AppLocalizations.of(context)!;
-    final warning = getWarningForAmenity(widget.amenity, loc);
     if (possibleDuplicate == null && warning == null) return Container();
 
     return GestureDetector(
@@ -103,6 +122,7 @@ class _DuplicateWarningState extends ConsumerState<DuplicateWarning> {
                 MaterialPageRoute(
                   builder: (context) =>
                       PoiEditorPage(amenity: possibleDuplicate),
+                  fullscreenDialog: true,
                 ),
               );
             },

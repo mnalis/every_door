@@ -205,7 +205,7 @@
   "@accountUnreadMail": {
     "description": "Label for the number of unread private messages a user has."
   },
-  "changesCount": "{count,plural, =1{{count} sprememba}, =2{{count} spremembi}, =few{{count} spremembe}, =other{{count} sprememb}}",
+  "changesCount": "{count,plural, =1{{count} sprememba} =2{{count} spremembi} few{{count} spremembe} other{{count} sprememb}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -525,7 +525,7 @@
   "@settingsBackground": {
     "description": "Settings entry for choosing background satellite imagery."
   },
-  "settingsPurgedMessage": "{count,plural, =1{Očiščen {count} element}, =2{Očiščena {count} elementa}, =few{Očiščeni {count} elementi}, =other{Očiščeno {count} elementov}}",
+  "settingsPurgedMessage": "{count,plural, =1{Očiščen {count} element} =2{Očiščena {count} elementa} few{Očiščeni {count} elementi} other{Očiščeno {count} elementov}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -741,7 +741,7 @@
   "@loadingTooMuchDataTitle": {
     "description": "Title for a warning alert when there's too much data downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{Prenesen {count} element.}, =two{Prenesena {count} elementa.}, =few{Preneseni {count} elementi.}, =other{Preneseno {count} elementov.}}",
+  "dataDownloadedCount": "{count,plural, =1{Prenesen {count} element.} =2{Prenesena {count} elementa.} few{Preneseni {count} elementi.} other{Preneseno {count} elementov.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -1117,7 +1117,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} leto}, =2{{count} leti}, =few{{count} leta}, =other{{count} let}}",
+  "years": "{count,plural, =1{{count} leto} =2{{count} leti} few{{count} leta} other{{count} let}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1131,5 +1131,69 @@
   "fieldDirectionSet": "Nastaviti",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Blok",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Tvoj komentar",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldPaymentAround": "Pogoste možnosti v bližini",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Napačen način, preveri dvojnike",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldHeightMeters": "Pričakovana dolžina v metrih, npr. 5,4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldPaymentLocal": "Lokalne izbire",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Moje privzete izbire so boljše",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Uporabi enake oznake za kartiranje",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Plačilo s kartico",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Ta vrsta predmeta ni podprta",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldHeightFeet": "Pričakovana dolžina v čevljih, npr. 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldPaymentChoose": "Izberi različne lokalne oznake …",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldNameLangSearch": "Najdi jezik",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentGlobal": "Globalne privzete",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldHeightAny": "Pričakovana dolžina, npr. 5,4 ali 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "apiStatusUploadingNotes": "Nalaganje opomb",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
   }
 }

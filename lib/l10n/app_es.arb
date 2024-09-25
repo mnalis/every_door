@@ -274,7 +274,7 @@
   "@buttonYes": {
     "description": "Button for approval."
   },
-  "buildingTypeHouse": "casa",
+  "buildingTypeHouse": "inicio",
   "@buildingTypeHouse": {},
   "changesPurgeTitle": "¿Purgar cambios?",
   "@changesPurgeTitle": {
@@ -528,7 +528,7 @@
   "@tagsValue": {
     "description": "Tags panel, add a new tag dialog: value label"
   },
-  "settingsTitle": "Ajustes",
+  "settingsTitle": "Configuración",
   "@settingsTitle": {
     "description": "App bar title for the settings panel."
   },
@@ -664,14 +664,14 @@
   "@editorMarkActive": {
     "description": "Button title to mark an amenity active (non-defunct)."
   },
-  "settingsPurgedMessage": "{count,plural, =1{{count} elemento purgado}, =few{{count} elementos purgados}, =other{{count} elementos purgados}}",
+  "settingsPurgedMessage": "{count,plural, =1{{count} elemento purgado} few{{count} elementos purgados} other{{count} elementos purgados}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
       "count": {}
     }
   },
-  "changesCount": "{count,plural, =1{{count} cambio}, =few{{count} cambios}, =other{{count} cambios}}",
+  "changesCount": "{count,plural, =1{{count} cambio} few{{count} cambios} other{{count} cambios}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -749,7 +749,7 @@
   "@aboutOnWeblate": {
     "description": "Button description to indicate a link to Weblate."
   },
-  "dataDownloadedCount": "{count,plural, =1{{count} elemento descargado.}, =few{{count} elementos descargados.}, =other{{count} elementos descargados.}}",
+  "dataDownloadedCount": "{count,plural, =1{{count} elemento descargado.} few{{count} elementos descargados.} other{{count} elementos descargados.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -942,7 +942,7 @@
   "@navNotesMode": {
     "description": "Tooltip for the notes mode button on the nav panel."
   },
-  "mapSettings": "Ajustes",
+  "mapSettings": "Configuraciones",
   "@mapSettings": {
     "description": "Tooltip for the \"hamburger\" button on a map to open app settings."
   },
@@ -1109,7 +1109,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} año}, =few{{count} años}, =other{{count} años}}",
+  "years": "{count,plural, =1{{count} año} few{{count} años} other{{count} años}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1131,5 +1131,143 @@
   "fieldDirectionSet": "Definir",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Bloquear",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Tu comentario",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldHeightMeters": "Longitud esperada en metros, por ejemplo 5,4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "Longitud esperada en pies, por ejemplo, 7'4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldHeightAny": "Longitud esperada, por ejemplo, 5,4 o 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "fieldPaymentAround": "Opciones más comunes",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Modo incorrecto, comprueba si hay duplicados",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldPaymentLocal": "Opciones locales",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Mis valores por defecto son mejores",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Utilizar las mismas etiquetas para el mapeado",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Pago con tarjeta",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Este tipo de objeto no es compatible",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldPaymentChoose": "Escoge otras etiquetas locales...",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldNameLangSearch": "Buscar el idioma",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldPaymentGlobal": "Valores globales por defecto",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "apiStatusUploadingNotes": "Subiendo notas",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawChangeTool": "Cambiar de herramienta",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawStream": "Corriente",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "drawUndo": "Deshacer",
+  "@drawUndo": {},
+  "drawScribble": "Garabato",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawEraser": "Borrador",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawRoad": "Carretera",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawTrack": "Pista",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawFootway": "Sendero",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawPath": "Ruta",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "Carril bici",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawCyclewayShared": "Carril bici",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawWall": "Pared",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawFence": "Valla",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawPower": "Red eléctrica",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "notesDelete": "Borrar",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawCulvert": "Alcantarilla",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "Eliminar, pero conservar la dirección",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "fieldWebsiteQR": "Escanear un código QR",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "editorDeleteBuilding": "Demolido",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
   }
 }

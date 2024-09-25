@@ -1,6 +1,7 @@
 import 'package:every_door/constants.dart';
 import 'package:every_door/fields/hours/days_editors.dart';
 import 'package:every_door/models/amenity.dart';
+import 'package:every_door/providers/country_locale.dart';
 import 'package:every_door/providers/osm_data.dart';
 import 'package:flutter/material.dart';
 import 'package:every_door/fields/hours/interval.dart';
@@ -39,6 +40,10 @@ class _OpeningHoursPageState extends ConsumerState<OpeningHoursPage> {
     isRaw = hours.raw;
     _findDefaultIntervals();
     _updateInactiveCard();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      ref.read(countryLocaleProvider).update(widget.element?.location);
+    });
   }
 
   @override
@@ -99,7 +104,7 @@ class _OpeningHoursPageState extends ConsumerState<OpeningHoursPage> {
         // The "24/7" value is removed in `initState()`, so we return it here.
         // (Although it shouldn't be called logically).
         initialValue: widget.hours?.trim() == '24/7' ? '24/7' : hours.hours,
-        textCapitalization: TextCapitalization.words,
+        textCapitalization: TextCapitalization.sentences,
         keyboardType: TextInputType.visiblePassword,
         autovalidateMode: AutovalidateMode.always,
         style: kFieldTextStyle,

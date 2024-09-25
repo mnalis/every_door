@@ -36,7 +36,7 @@ class _LogDisplayPageState extends ConsumerState<LogDisplayPage> {
         controller: _controller,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(logStore.last(30).join('\n')),
+          child: SelectableText(logStore.last(30).join('\n')),
         ),
       ),
       floatingActionButton: sentMessage
@@ -66,7 +66,7 @@ class _LogDisplayPageState extends ConsumerState<LogDisplayPage> {
                   body: <String, String>{
                     'code': 'rfJ7gnvut4%uHY6',
                     'version': '$kAppTitle $platform $kAppVersion',
-                    'who': ref.read(authProvider) ?? 'unknown',
+                    'who': ref.read(authProvider)?.displayName ?? 'unknown',
                     'message': message.first,
                     'log': logStore.last(kMaxLogLinesToSend).join('\n'),
                   },

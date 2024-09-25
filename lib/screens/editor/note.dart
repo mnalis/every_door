@@ -4,66 +4,129 @@ import 'package:every_door/models/note.dart';
 import 'package:every_door/providers/notes.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class NoteEditorPane extends ConsumerStatefulWidget {
-  final OsmNote? note;
+  final BaseNote? note;
   final LatLng location;
 
-  const NoteEditorPane({Key? key, this.note, required this.location})
-      : super(key: key);
+  const NoteEditorPane({super.key, this.note, required this.location});
 
   @override
   ConsumerState<NoteEditorPane> createState() => _NoteEditorPaneState();
 }
 
 class _NoteEditorPaneState extends ConsumerState<NoteEditorPane> {
+  late bool isOsmNote;
   String message = '';
+  List<String> shortcuts = [];
+
+  static const kMaxShortcuts = 7;
+  static const kDefaultShortcuts = [
+    'asphalt',
+    'ground',
+    'gate open',
+    'gate closed',
+    'culvert',
+    'bridge'
+  ];
 
   @override
   void initState() {
     super.initState();
 
+    isOsmNote = widget.note != null && widget.note is OsmNote;
     // If the last comment is new, pre-fill it for editing.
-    final note = widget.note;
-    if (note != null && note.comments.isNotEmpty) {
-      if (note.comments.last.isNew) {
-        message = note.comments.last.message;
-      }
-    }
+    message = extractMessage();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      updateShortcutsList();
+    });
   }
 
-  bool get isChanged => message.isNotEmpty;
+  String extractMessage() {
+    if (widget.note != null) {
+      if (widget.note is OsmNote) {
+        final note = widget.note as OsmNote;
+        if (note.comments.isNotEmpty) {
+          if (note.comments.last.isNew) {
+            return note.comments.last.message;
+          }
+        }
+      } else {
+        final note = widget.note as MapNote;
+        return note.message;
+      }
+    }
+    return "";
+  }
 
-  OsmNote? _buildEditedNote() {
-    final note = widget.note;
-    if (note == null) {
-      return message.isEmpty
-          ? null
-          : OsmNote(
-              location: widget.location,
-              comments: [OsmNoteComment(message: message, isNew: true)],
-            );
+  updateShortcutsList() async {
+    final popular =
+        await ref.read(notesProvider).getPopularNotes(kMaxShortcuts);
+    // First go popular, then unused defaults until we get to max.
+    setState(() {
+      if (popular.length == kMaxShortcuts)
+        shortcuts = popular;
+      else {
+        shortcuts = popular +
+            kDefaultShortcuts
+                .where((element) => !popular.contains(element))
+                .take(kMaxShortcuts - popular.length)
+                .toList();
+      }
+    });
+  }
+
+  bool get isChanged => message != extractMessage();
+
+  BaseNote? _buildEditedNote() {
+    if (widget.note == null) {
+      if (message.isEmpty) {
+        return null;
+      } else if (isOsmNote) {
+        return OsmNote(
+          location: widget.location,
+          comments: [OsmNoteComment(message: message, isNew: true)],
+        );
+      } else {
+        return MapNote(
+          location: widget.location,
+          message: message,
+        );
+      }
     }
 
-    if (note.comments.isNotEmpty && note.comments.last.isNew) {
+    // Not converting notes between types because that would require database queries here.
+    if (widget.note is OsmNote) {
+      final note = widget.note as OsmNote;
+      if (note.comments.isNotEmpty && note.comments.last.isNew) {
+        if (message.isEmpty)
+          note.comments.removeLast();
+        else
+          note.comments.last.message = message;
+      } else if (message.isNotEmpty) {
+        note.comments.add(OsmNoteComment(message: message, isNew: true));
+      }
+      return note;
+    } else {
       if (message.isEmpty)
-        note.comments.removeLast();
-      else
-        note.comments.last.message = message;
-    } else if (message.isNotEmpty) {
-      note.comments.add(OsmNoteComment(message: message, isNew: true));
+        return null; // Not deleting MapNotes by clearing a message.
+      final note = widget.note as MapNote;
+      note.message = message;
+      return note;
     }
-    return note;
   }
 
   saveAndClose([bool pop = true]) {
     if (isChanged) {
       final note = _buildEditedNote();
       if (note != null) {
+        print('note editor: saving note!');
         ref.read(notesProvider).saveNote(note);
       }
     }
@@ -74,12 +137,7 @@ class _NoteEditorPaneState extends ConsumerState<NoteEditorPane> {
     if (widget.note != null) {
       final note = _buildEditedNote();
       if (note != null) {
-        if (note.isNew) {
-          ref.read(notesProvider).deleteNote(note);
-        } else {
-          note.deleting = true;
-          ref.read(notesProvider).saveNote(note);
-        }
+        ref.read(notesProvider).deleteNote(note);
       }
     }
     Navigator.pop(context);
@@ -117,103 +175,161 @@ class _NoteEditorPaneState extends ConsumerState<NoteEditorPane> {
     return result;
   }
 
+  Iterable<OsmNoteComment> getOldComments() {
+    if (!isOsmNote || widget.note == null || widget.note is! OsmNote)
+      return const [];
+    return (widget.note as OsmNote).comments.where((c) => !c.isNew);
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return WillPopScope(
-      onWillPop: () async {
-        saveAndClose(false);
-        return true;
-      },
-      child: SingleChildScrollView(
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              top: 6.0,
-              left: 10.0,
-              right: 10.0,
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final OsmNoteComment comment
-                    in widget.note?.comments.where((c) => !c.isNew) ??
-                        const []) ...[
-                  SelectableText.rich(
-                    TextSpan(children: [
-                      TextSpan(
-                          text: comment.author ?? loc.notesAnonymous,
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      TextSpan(text: ': '),
-                      ..._parseLinks(comment.message),
-                    ]),
-                    style: kFieldTextStyle,
-                  ),
-                  SizedBox(height: 10.0),
-                ],
-                TextFormField(
-                  autofocus: true,
-                  initialValue: message,
-                  decoration: InputDecoration(
-                    labelText: 'Your comment',
-                  ),
+    final dateFormat =
+        DateFormat.yMMM(Localizations.localeOf(context).toLanguageTag());
+
+    return SingleChildScrollView(
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 6.0,
+            left: 10.0,
+            right: 10.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final OsmNoteComment comment in getOldComments()) ...[
+                SelectableText.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                        text: comment.author ?? loc.notesAnonymous,
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(text: ': '),
+                    ..._parseLinks(comment.message),
+                    TextSpan(
+                      text: ' (${dateFormat.format(comment.date)})',
+                      style: TextStyle(fontSize: kFieldFontSize - 3),
+                    ),
+                  ]),
                   style: kFieldTextStyle,
-                  onChanged: (value) {
-                    message = value.trim();
-                  },
                 ),
-                Row(
-                  children: [
-                    if (widget.note != null)
-                      TextButton(
-                        child: Text(
-                          loc.notesClose.toUpperCase(),
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.error),
+                SizedBox(height: 10.0),
+              ],
+              TextFormField(
+                autofocus: true,
+                initialValue: message,
+                decoration: InputDecoration(
+                  labelText: loc.notesComment,
+                ),
+                style: kFieldTextStyle,
+                onChanged: (value) {
+                  setState(() {
+                    message = value.trim();
+                    if (!isOsmNote && message.length > MapNote.kMaxLength) {
+                      isOsmNote = true;
+                    }
+                  });
+                },
+              ),
+              if (!isOsmNote)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Wrap(
+                    direction: Axis.horizontal,
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      for (final shortcut in shortcuts)
+                        GestureDetector(
+                          onTap: () {
+                            message = shortcut;
+                            saveAndClose();
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 2.0, horizontal: 4.0),
+                            decoration: BoxDecoration(
+                              color: Colors.black38,
+                              borderRadius: BorderRadius.circular(5.0),
+                            ),
+                            child: Text(
+                              shortcut,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: kFieldFontSize),
+                            ),
+                          ),
                         ),
-                        onPressed: () async {
+                    ],
+                  ),
+                ),
+              if (widget.note == null)
+                SwitchListTile(
+                  value: isOsmNote,
+                  title: Text('Publish to OSM'),
+                  onChanged: message.length > MapNote.kMaxLength
+                      ? null
+                      : (value) {
+                          setState(() {
+                            isOsmNote = !isOsmNote;
+                          });
+                        },
+                ),
+              Row(
+                children: [
+                  if (widget.note != null)
+                    TextButton(
+                      child: Text(
+                        widget.note!.isNew
+                            ? loc.notesDelete.toUpperCase()
+                            : loc.notesClose.toUpperCase(),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                      onPressed: () async {
+                        if (widget.note is OsmNote && !widget.note!.isNew) {
                           final answer = await showOkCancelAlertDialog(
                             context: context,
                             title: loc.notesCloseMessage,
                             okLabel: loc.notesClose,
                             isDestructiveAction: true,
                           );
-                          if (answer == OkCancelResult.ok) {
-                            deleteAndClose();
-                          }
-                        },
-                      ),
-                    Expanded(child: Container()),
-                    TextButton(
-                      child: Text(
-                          MaterialLocalizations.of(context).cancelButtonLabel),
-                      onPressed: () async {
-                        final navigator = Navigator.of(context);
-                        if (message.trim().isNotEmpty) {
-                          final answer = await showOkCancelAlertDialog(
-                            context: context,
-                            title: MaterialLocalizations.of(context).cancelButtonLabel,
-                            message: loc.notesCancelMessage,
-                            isDestructiveAction: true,
-                          );
                           if (answer != OkCancelResult.ok) return;
                         }
-                        navigator.pop();
+                        deleteAndClose();
                       },
                     ),
-                    TextButton(
-                      child:
-                          Text(MaterialLocalizations.of(context).okButtonLabel),
-                      onPressed: () {
-                        saveAndClose();
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  Expanded(child: Container()),
+                  TextButton(
+                    child: Text(
+                        MaterialLocalizations.of(context).cancelButtonLabel),
+                    onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      if (isChanged) {
+                        final answer = await showOkCancelAlertDialog(
+                          context: context,
+                          title: MaterialLocalizations.of(context)
+                              .cancelButtonLabel,
+                          message: loc.notesCancelMessage,
+                          isDestructiveAction: true,
+                        );
+                        if (answer != OkCancelResult.ok) return;
+                      }
+                      navigator.pop();
+                    },
+                  ),
+                  TextButton(
+                    child:
+                        Text(MaterialLocalizations.of(context).okButtonLabel),
+                    onPressed: () {
+                      saveAndClose();
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

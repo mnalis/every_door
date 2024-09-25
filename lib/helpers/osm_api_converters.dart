@@ -146,7 +146,7 @@ class XmlToOsmConverter extends Converter<List<XmlNode>, List<OsmElement>> {
   }
 }
 
-class XmlToOsmSink extends ChunkedConversionSink<List<XmlNode>> {
+class XmlToOsmSink implements ChunkedConversionSink<List<XmlNode>> {
   final XmlToOsmConverter _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -290,7 +290,7 @@ class XmlToNotesConverter extends Converter<List<XmlNode>, List<OsmNote>> {
   }
 }
 
-class XmlToNotesSink extends ChunkedConversionSink<List<XmlNode>> {
+class XmlToNotesSink implements ChunkedConversionSink<List<XmlNode>> {
   final XmlToNotesConverter _converter;
   final Sink<List<OsmNote>> _sink;
 
@@ -328,11 +328,15 @@ class MarkReferenced extends Converter<List<OsmElement>, List<OsmElement>> {
       }
 
       // Process references in this element
+      final isMember = element.id.type == OsmElementType.relation
+          ? IsMember.relation
+          : IsMember.way;
+
       if (refs != null) {
         for (final ref in refs) {
           final el = _stack[ref];
           if (el != null) {
-            referenced.add(el.copyWith(isMember: true));
+            referenced.add(el.copyWith(isMember: isMember));
             _stack.remove(ref);
           } else {
             _refs.add(ref);
@@ -342,7 +346,7 @@ class MarkReferenced extends Converter<List<OsmElement>, List<OsmElement>> {
 
       // Emit if already referenced, stash otherwise
       if (_refs.contains(element.id)) {
-        referenced.add(element.copyWith(isMember: true));
+        referenced.add(element.copyWith(isMember: isMember));
         _refs.remove(element.id);
       } else {
         _stack[element.id] = element;
@@ -362,7 +366,7 @@ class MarkReferenced extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class MarkReferencedSink extends ChunkedConversionSink<List<OsmElement>> {
+class MarkReferencedSink implements ChunkedConversionSink<List<OsmElement>> {
   final MarkReferenced _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -400,11 +404,11 @@ class CollectGeometry extends Converter<List<OsmElement>, List<OsmElement>> {
         }
       } else if (el.type == OsmElementType.way) {
         if (el.nodes != null && el.nodes!.isNotEmpty) {
-          final bounds = LatLngBounds.fromPoints(el.nodes!
+          final points = el.nodes!
               .map((nodeId) => nodeLocations[nodeId])
-              .whereType<LatLng>()
-              .toList());
-          if (bounds.isValid) {
+              .whereType<LatLng>();
+          if (points.isNotEmpty) {
+            final bounds = LatLngBounds.fromPoints(points.toList());
             final nodeLoc = el.nodes == null
                 ? null
                 : {
@@ -433,18 +437,22 @@ class CollectGeometry extends Converter<List<OsmElement>, List<OsmElement>> {
         }
       } else if (el.type == OsmElementType.relation) {
         if (el.members != null) {
-          var bounds = LatLngBounds();
+          final points = <LatLng>[];
           for (final m in el.members!) {
             if (m.type == OsmElementType.node &&
                 nodeLocations.containsKey(m.id.ref)) {
-              bounds.extend(nodeLocations[m.id.ref]);
+              points.add(nodeLocations[m.id.ref]!);
             } else if (m.type == OsmElementType.way &&
                 wayGeometries.containsKey(m.id)) {
-              bounds.extendBounds(wayGeometries[m.id]!.bounds);
+              points.addAll([
+                wayGeometries[m.id]!.bounds.northEast,
+                wayGeometries[m.id]!.bounds.southWest,
+              ]);
             }
           }
-          if (bounds.isValid)
-            result.add(el.copyWith(geometry: Envelope(bounds)));
+          if (points.isNotEmpty)
+            result.add(el.copyWith(
+                geometry: Envelope(LatLngBounds.fromPoints(points))));
         }
       }
     }
@@ -457,7 +465,7 @@ class CollectGeometry extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class CollectGeometrySink extends ChunkedConversionSink<List<OsmElement>> {
+class CollectGeometrySink implements ChunkedConversionSink<List<OsmElement>> {
   final CollectGeometry _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -515,7 +523,7 @@ class ExtractRoadNames extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class ExtractRoadNamesSink extends ChunkedConversionSink<List<OsmElement>> {
+class ExtractRoadNamesSink implements ChunkedConversionSink<List<OsmElement>> {
   final ExtractRoadNames _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -555,7 +563,7 @@ class StripMembers extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class StripMembersSink extends ChunkedConversionSink<List<OsmElement>> {
+class StripMembersSink implements ChunkedConversionSink<List<OsmElement>> {
   final StripMembers _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -588,7 +596,7 @@ class FilterAmenities extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class FilterAmenitiesSink extends ChunkedConversionSink<List<OsmElement>> {
+class FilterAmenitiesSink implements ChunkedConversionSink<List<OsmElement>> {
   final FilterAmenities _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -620,7 +628,7 @@ class FilterSnapTargets extends Converter<List<OsmElement>, List<OsmElement>> {
   }
 }
 
-class FilterSnapTargetsSink extends ChunkedConversionSink<List<OsmElement>> {
+class FilterSnapTargetsSink implements ChunkedConversionSink<List<OsmElement>> {
   final FilterSnapTargets _converter;
   final Sink<List<OsmElement>> _sink;
 
@@ -660,7 +668,7 @@ class ParseUploaded extends Converter<List<XmlNode>, List<UploadedElementRef>> {
   }
 }
 
-class ParseUploadedSink extends ChunkedConversionSink<List<XmlNode>> {
+class ParseUploadedSink implements ChunkedConversionSink<List<XmlNode>> {
   final ParseUploaded _converter;
   final Sink<List<UploadedElementRef>> _sink;
 

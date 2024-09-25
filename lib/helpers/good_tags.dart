@@ -3,17 +3,23 @@
 /// List of keys to consider when looking for a single main tag, in order of preference.
 const kMainKeys = <String>[
   'amenity', 'shop', 'craft', 'tourism', 'historic', 'club',
-  'highway', 'railway',
-  'office', 'healthcare', 'leisure', 'natural',
-  'emergency', 'waterway', 'man_made', 'power', 'aeroway', 'aerialway',
+  'office', 'healthcare', 'leisure', 'emergency', 'attraction',
+  // non-amenity keys:
+  'highway', 'railway', 'natural',
+  'waterway', 'man_made', 'power', 'aeroway', 'aerialway',
   'marker', 'public_transport', 'traffic_sign', 'hazard', 'telecom',
   'landuse', 'military', 'barrier', 'building', 'entrance', 'boundary',
-  'advertising', 'playground', 'traffic_calming', 'attraction',
+  'advertising', 'playground', 'traffic_calming', 'cemetery',
 ];
+const kAmenityMainKeys = <String>{
+  'amenity', 'shop', 'craft', 'tourism', 'historic', 'club',
+  'office', 'healthcare', 'leisure', 'emergency', 'attraction',
+};
 final kMainKeysSet = Set.of(kMainKeys);
 
 const kDisused = 'disused:';
 const kDeleted = 'was:';
+const kBuildingDeleted = 'demolished:';
 
 /// List of highway=* values that can denote a named road.
 const kHighwayRoadValues = <String>{
@@ -32,7 +38,7 @@ const kBuildingNeedsAddress = {
 
 /// Type of object to snap an element to.
 /// E.g. entrances are snapped to `SnapTo.building`.
-enum SnapTo { nothing, building, highway, railway, wall }
+enum SnapTo { nothing, building, highway, railway, wall, stream }
 
 /// Kind of element for sorting elements between modes.
 enum ElementKind {
@@ -47,13 +53,25 @@ enum ElementKind {
 
 /// Find the single main key for an object. Also considers lifecycle prefixes.
 String? getMainKey(Map<String, String> tags, [bool noPrefix = false]) {
+  String? prefixed;
   for (final k in kMainKeys) {
     if (tags[k] == 'no') continue;
-    if (tags.containsKey(k)) return k;
-    if (tags.containsKey(kDisused + k)) return noPrefix ? k : kDisused + k;
-    if (tags.containsKey(kDeleted + k)) return noPrefix ? k : kDeleted + k;
+    if (tags.containsKey(k)) {
+      if (
+          !kAmenityMainKeys.contains(k) && prefixed != null &&
+          kAmenityMainKeys.contains(_clearPrefix(prefixed))
+      )
+        return prefixed;
+      return k;
+    }
+    if (prefixed == null && tags.containsKey(kDisused + k))
+      prefixed = noPrefix ? k : kDisused + k;
+    if (prefixed == null && tags.containsKey(kDeleted + k))
+      prefixed = noPrefix ? k : kDeleted + k;
+    if (k == "building" && prefixed == null && tags.containsKey(kBuildingDeleted + k))
+      prefixed = noPrefix ? k : kBuildingDeleted + k;
   }
-  return null;
+  return prefixed;
 }
 
 /// Sorts the element by kind, using its tags and helper functions from this file.
@@ -104,6 +122,8 @@ bool isAmenityTags(Map<String, String> tags) {
       'bench',
       'parking_space',
       'clothes_dryer',
+      'dressing_room',
+      'shower',
       'waste_basket',
       'bicycle_parking',
       'shelter',
@@ -205,7 +225,10 @@ bool isAmenityTags(Map<String, String> tags) {
     };
     return goodLeisure.contains(v);
   } else if (k == 'emergency') {
-    return v == 'ambulance_station';
+    const goodEmergency = <String>{
+      'ambulance_station', 'mountain_rescue', 'ses_station', 'water_rescue', 'air_rescue_service',
+    };
+    return goodEmergency.contains(v);
   } else if (k == 'military') {
     return v == 'office';
   } else if (k == 'attraction') {
@@ -234,7 +257,7 @@ bool isMicroTags(Map<String, String> tags) {
     'playground', 'advertising', 'power', 'traffic_calming',
     'barrier', 'highway', 'railway', 'natural', 'leisure',
     'marker', 'public_transport', 'hazard', 'traffic_sign',
-    'telecom', 'attraction',
+    'telecom', 'attraction', 'cemetery', 'aeroway', 'waterway',
   };
   if (kAllGoodKeys.contains(k)) return true;
   return false;
@@ -266,7 +289,6 @@ bool isGoodTags(Map<String, String> tags) {
       'parking_entrance',
       'loading_dock',
       'waste_dump_site',
-      'sanitary_dump_station',
       'waste_transfer_station',
     };
     return !kWrongAmenities.contains(v);
@@ -285,7 +307,7 @@ bool isGoodTags(Map<String, String> tags) {
       'crossing', 'bus_stop', 'street_lamp', 'platform',
       'stop', 'give_way', 'milestone', 'speed_camera',
       'passing_place', 'traffic_signals', 'traffic_mirror',
-      'elevator', 'speed_display',
+      'elevator', 'speed_display', 'emergency_access_point',
     };
     return kGoodHighway.contains(v);
   } else if (k == 'railway') {
@@ -331,6 +353,15 @@ bool isGoodTags(Map<String, String> tags) {
       'ventilation_shaft',
     };
     return !kWrongManMade.contains(v);
+  } else if (k == 'cemetery') {
+    return v == 'grave';
+  } else if (k == 'waterway') {
+    const kGoodWaterway = <String>{
+      'dam', 'weir', 'waterfall', 'rapids', 'lock_gate', 'sluice_gate',
+      'floodgate', 'debris_screen', 'check_dam', 'turning_point',
+      'water_point', 'fuel',
+    };
+    return kGoodWaterway.contains(v);
   }
   return false;
 }
@@ -342,9 +373,37 @@ bool needsCheckDate(Map<String, String> tags) {
   return isAmenityTags(tags);
 }
 
+/// Whether this is a long-term amenity that doesn't need a regular check.
+bool isStructureTag(String k, String? v) {
+  if (v == null) return false;
+
+  if (k == 'amenity') {
+    const kAmenityStructures = <String>{
+      'kindergarten', 'college', 'library', 'research_institute',
+      'school', 'university', 'ferry_terminal', 'hospital',
+      'cinema', 'theatre', 'arts_centre', 'conference_centre',
+      'events_venue', 'courthouse', 'fire_station', 'police',
+      'prison', 'townhall', 'crematorium', 'funeral_hall',
+      'grave_yard', 'marketplace', 'monastery', 'place_of_worship',
+    };
+    return kAmenityStructures.contains(v);
+  } else if (k == 'leisure') {
+    return {'stadium', 'golf_course', 'resort'}.contains(v);
+  }
+  return false;
+}
+
+bool isStructure(Map<String, String> tags) {
+  final mainKey = getMainKey(tags);
+  return mainKey == null ? false : isStructureTag(mainKey, tags[mainKey]);
+}
+
 /// Whether we should display address and floor fields in the editor.
 bool needsAddress(Map<String, String> tags) {
-  if (isAmenityTags(tags)) return true;
+  final kind = detectKind(tags);
+  if ({ElementKind.amenity, ElementKind.building,
+       ElementKind.address}.contains(kind))
+    return true;
   const kAmenityLoc = {'atm', 'vending_machine', 'parcel_locker'};
   return kAmenityLoc.contains(tags['amenity']);
 }
@@ -370,8 +429,22 @@ SnapTo detectSnap(Map<String, String> tags) {
     };
     if (kSnapRailway.contains(tags['railway']!)) return SnapTo.railway;
   } else if ({'traffic_calming', 'barrier'}.contains(k)) return SnapTo.highway;
-  else if (k == 'historic' && {'plaque', 'blue_plaque'}.contains(tags['memorial']))
-    return SnapTo.building;
+  // else if (k == 'historic' && {'plaque', 'blue_plaque'}.contains(tags['memorial']))
+  //   return SnapTo.building;
+  else if (k == 'public_transport' && tags['public_transport'] == 'stop_position') {
+    if (tags['bus'] == 'yes' || tags['trolleybus'] == 'yes')
+      return SnapTo.highway;
+    else if (tags['train'] == 'yes' || tags['subway'] == 'yes' || tags['tram'] == 'yes')
+      return SnapTo.railway;
+  }
+  else if (tags['support'] == 'wall_mounted') return SnapTo.wall;
+  else if (k == 'tourism' && tags['tourism'] == 'artwork') {
+    if ({'mural', 'graffiti'}.contains(tags['artwork_type'])) return SnapTo.wall;
+  }
+  else if (k == 'waterway') {
+    if (!{'turning_point', 'water_point', 'fuel'}.contains(tags[k]))
+      return SnapTo.stream;
+  }
 
   return SnapTo.nothing;
 }
@@ -385,9 +458,11 @@ bool isSnapTargetTags(Map<String, String> tags, [SnapTo? kind]) {
     return !{'platform', 'station', 'signal_box', 'platform_edge'}
       .contains(tags['railway']);
   if (tags.containsKey('building') && (kind == null || kind == SnapTo.building))
-    return tags['building'] != 'roof';
+    return tags['building'] != 'roof' && tags['building'] != 'part';
   if (tags.containsKey('barrier') && (kind == null || kind == SnapTo.wall))
     return {'wall', 'fence'}.contains(tags['barrier']);
+  if (tags.containsKey('waterway') && (kind == null || kind == SnapTo.stream))
+    return {'river', 'stream', 'ditch', 'drain', 'canal'}.contains(tags['waterway']);
   return false;
 }
 

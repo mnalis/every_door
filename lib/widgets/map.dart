@@ -3,6 +3,7 @@ import 'dart:math' show min, max, Point;
 
 import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/closest_points.dart';
+import 'package:every_door/helpers/pin_marker.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:every_door/providers/editor_settings.dart';
 import 'package:every_door/providers/geolocation.dart';
@@ -12,8 +13,10 @@ import 'package:every_door/providers/legend.dart';
 import 'package:every_door/providers/location.dart';
 import 'package:every_door/providers/poi_filter.dart';
 import 'package:every_door/screens/settings.dart';
+import 'package:every_door/widgets/attribution.dart';
 import 'package:every_door/widgets/loc_marker.dart';
 import 'package:every_door/widgets/track_button.dart';
+import 'package:every_door/widgets/walkpath.dart';
 import 'package:every_door/widgets/zoom_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -105,38 +108,39 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
 
   void onMapEvent(MapEvent event) {
     if (event is MapEventWithMove) {
-      mapCenter = event.targetCenter;
-      if (event.source != MapEventSource.mapController) {
-        ref.read(trackingProvider.state).state = false;
-        ref.read(zoomProvider.state).state = event.zoom;
-        if (event.zoom < kEditMinZoom) {
+      mapCenter = event.camera.center;
+      if (event.source != MapEventSource.mapController &&
+          event.source != MapEventSource.nonRotatedSizeChange) {
+        ref.read(trackingProvider.notifier).state = false;
+        ref.read(zoomProvider.notifier).state = event.camera.zoom;
+        if (event.camera.zoom < kEditMinZoom) {
           // Switch navigation mode on
-          ref.read(navigationModeProvider.state).state = true;
+          ref.read(navigationModeProvider.notifier).state = true;
         }
         setState(() {
           // redraw center marker
         });
-        if (widget.onDrag != null) widget.onDrag!(event.targetCenter);
+        if (widget.onDrag != null) widget.onDrag!(event.camera.center);
       }
     } else if (event is MapEventMoveEnd) {
       if (widget.onDragEnd != null &&
           event.source != MapEventSource.mapController)
-        widget.onDragEnd!(event.center);
+        widget.onDragEnd!(event.camera.center);
     } else if (event is MapEventTap) {
       if (widget.onTap != null) {
-        widget.onTap!(
-            _getBoundsForRadius(event.tapPosition, event.zoom, kTapRadius));
+        widget.onTap!(_getBoundsForRadius(
+            event.tapPosition, event.camera.zoom, kTapRadius));
       }
     } else if (event is MapEventRotateEnd) {
       if (event.source != MapEventSource.mapController) {
-        double rotation = mapController.rotation;
+        double rotation = mapController.camera.rotation;
         while (rotation > 200) rotation -= 360;
         while (rotation < -200) rotation += 360;
         if (rotation.abs() < kRotationThreshold) {
-          ref.read(rotationProvider.state).state = 0.0;
+          ref.read(rotationProvider.notifier).state = 0.0;
           mapController.rotate(0.0);
         } else {
-          ref.read(rotationProvider.state).state = rotation;
+          ref.read(rotationProvider.notifier).state = rotation;
         }
       }
     }
@@ -145,12 +149,12 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
   void onControllerLocation(LatLng location, bool emitDrag, bool onlyIfFar) {
     if (onlyIfFar) {
       const maxDist = 1e-7; // degrees
-      final center = mapController.center;
+      final center = mapController.camera.center;
       final dist = (center.longitude - location.longitude).abs() +
           (center.latitude - location.latitude).abs();
       if (dist / 2 <= maxDist) return;
     }
-    mapController.move(location, mapController.zoom);
+    mapController.move(location, mapController.camera.zoom);
     if (emitDrag && widget.onDrag != null) {
       widget.onDrag!(location);
     }
@@ -172,7 +176,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     // Here we don't reproject, since on low zooms Mercator could be considered equirectandular.
     // Taking first 9, for we display only 9.
     final bounds = LatLngBounds.fromPoints(locations.take(9).toList());
-    final center = mapController.center;
+    final center = mapController.camera.center;
     final dlat = max(
       (bounds.north - center.latitude).abs(),
       (bounds.south - center.latitude).abs(),
@@ -185,13 +189,9 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
       LatLng(center.latitude - dlat, center.longitude - dlon),
       LatLng(center.latitude + dlat, center.longitude + dlon),
     );
-    return mapController
-        .centerZoomFitBounds(newBounds,
-            options: FitBoundsOptions(
-              padding: padding,
-              maxZoom: kMapZoom + 1,
-              inside: false,
-            ))
+    return CameraFit.bounds(
+            bounds: newBounds, padding: padding, maxZoom: kMapZoom + 1)
+        .fit(mapController.camera)
         .zoom;
   }
 
@@ -206,7 +206,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
       zoom = _calculateZoom(locations.take(locations.length - 2), kPadding);
     }
 
-    final curZoom = mapController.zoom;
+    final curZoom = mapController.camera.zoom;
     double maxZoomHere = kMapZoom;
     if (zoom > kMapZoom && zoom > curZoom) {
       // Overzoom only if points are too close.
@@ -216,8 +216,8 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
       zoom = min(curZoom, kMapZoom - 1);
     else if (zoom > maxZoomHere) zoom = max(curZoom, maxZoomHere);
     if ((zoom - curZoom).abs() >= kZoomThreshold) {
-      mapController.move(mapController.center, zoom);
-      ref.read(zoomProvider.state).state = zoom;
+      mapController.move(mapController.camera.center, zoom);
+      ref.read(zoomProvider.notifier).state = zoom;
     }
   }
 
@@ -239,7 +239,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     // When tracking location, move map and notify the poi list.
     ref.listen<LatLng?>(geolocationProvider, (_, LatLng? location) {
       if (location != null && ref.watch(trackingProvider)) {
-        mapController.move(location, mapController.zoom);
+        mapController.move(location, mapController.camera.zoom);
         if (widget.onDragEnd != null) widget.onDragEnd!(location);
         if (widget.onTrack != null) widget.onTrack!(location);
       }
@@ -248,7 +248,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     // When turning the tracking on, move the map immediately.
     ref.listen(trackingProvider, (_, bool newState) {
       if (trackLocation != null && newState) {
-        mapController.move(trackLocation, mapController.zoom);
+        mapController.move(trackLocation, mapController.camera.zoom);
         if (widget.onDragEnd != null) widget.onDragEnd!(trackLocation);
         if (widget.onTrack != null) widget.onTrack!(trackLocation);
       }
@@ -256,7 +256,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
 
     // Rotate the map according to the global rotation value.
     ref.listen(rotationProvider, (_, double newValue) {
-      if ((newValue - mapController.rotation).abs() >= 1.0) {
+      if ((newValue - mapController.camera.rotation).abs() >= 1.0) {
         mapController.rotate(newValue);
       }
     });
@@ -264,21 +264,21 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     // For micromapping, zoom in and out.
     ref.listen<LatLngBounds?>(microZoomedInProvider,
         (_, LatLngBounds? newState) {
-      double targetZoom = newState != null
-          ? kMicromappingTapZoom
-          : (savedZoom ?? mapController.zoom);
-      if (newState != null && targetZoom < mapController.zoom)
-        targetZoom = mapController.zoom;
-      savedZoom = mapController.zoom;
-      mapController.move(newState?.center ?? mapController.center, targetZoom);
+      double oldZoom = mapController.camera.zoom;
+      double targetZoom =
+          newState != null ? kMicromappingTapZoom : (savedZoom ?? oldZoom);
+      if (newState != null && targetZoom < oldZoom) targetZoom = oldZoom;
+      savedZoom = oldZoom;
+      mapController.move(
+          newState?.center ?? mapController.camera.center, targetZoom);
     });
 
     // When switching to micromapping, increase zoom.
     ref.listen(editorModeProvider, (_, next) {
       if (next == EditorMode.micromapping) {
-        if (mapController.zoom < kMicroZoom) {
-          mapController.move(mapController.center, kMicroZoom);
-          ref.read(zoomProvider.state).state = kMicroZoom;
+        if (mapController.camera.zoom < kMicroZoom) {
+          mapController.move(mapController.camera.center, kMicroZoom);
+          ref.read(zoomProvider.notifier).state = kMicroZoom;
         }
       }
     });
@@ -289,6 +289,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     });
 
     final imagery = ref.watch(selectedImageryProvider);
+    final tileLayer = TileLayerOptions(imagery);
     final leftHand = ref.watch(editorSettingsProvider).leftHand;
     final iconSize = widget.drawNumbers ? 18.0 : 14.0;
     final legendCon = ref.watch(legendProvider.notifier);
@@ -298,28 +299,97 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
     return FlutterMap(
       mapController: mapController,
       options: MapOptions(
-        center: widget.initialLocation, // This does not work :(
-        rotation: ref.watch(rotationProvider),
-        rotationThreshold: kRotationThreshold,
+        initialCenter: widget.initialLocation, // This does not work :(
+        initialRotation: ref.watch(rotationProvider),
         // zoom: kMapZoom,
         // colorsFromLegend is an indirect way to know it's micromapping mode.
-        zoom: ref.watch(zoomProvider),
+        initialZoom: ref.watch(zoomProvider),
         minZoom: kEditMinZoom - 0.1,
         maxZoom: kEditMaxZoom,
-        interactiveFlags: ref.watch(microZoomedInProvider) != null
-            ? InteractiveFlag.none
-            : (InteractiveFlag.drag |
-                InteractiveFlag.pinchZoom |
-                InteractiveFlag.pinchMove |
-                InteractiveFlag.rotate),
-        plugins: [
-          ZoomButtonsPlugin(),
-          OverlayButtonPlugin(),
-        ],
+        interactionOptions: InteractionOptions(
+          flags: ref.watch(microZoomedInProvider) != null
+              ? InteractiveFlag.none
+              : InteractiveFlag.all - InteractiveFlag.flingAnimation,
+          rotationThreshold: kRotationThreshold,
+        ),
       ),
-      nonRotatedLayers: [
+      children: [
+        TileLayer(
+          urlTemplate: tileLayer.urlTemplate,
+          wmsOptions: tileLayer.wmsOptions,
+          tileProvider: tileLayer.tileProvider,
+          minNativeZoom: tileLayer.minNativeZoom,
+          maxNativeZoom: tileLayer.maxNativeZoom,
+          maxZoom: tileLayer.maxZoom,
+          tileSize: tileLayer.tileSize,
+          tms: tileLayer.tms,
+          subdomains: tileLayer.subdomains,
+          additionalOptions: tileLayer.additionalOptions,
+          userAgentPackageName: tileLayer.userAgentPackageName,
+          reset: tileResetController.stream,
+        ),
+        LocationMarkerWidget(),
+        WalkPathPolyline(faint: true),
+        if (trackLocation != null)
+          CircleLayer(
+            circles: [
+              for (final objLocation in widget.otherObjects)
+                CircleMarker(
+                  point: objLocation,
+                  color: Colors.black.withOpacity(0.4),
+                  radius: 2.0,
+                ),
+            ],
+          ),
+        MarkerLayer(
+          markers: [
+            for (var i = amenities.length - 1; i >= 0; i--)
+              Marker(
+                point: amenities[i].location,
+                rotate: true,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: getIconColor(amenities[i], legendCon)
+                            .withOpacity(widget.drawNumbers ? 0.7 : 1.0),
+                        borderRadius: BorderRadius.circular(iconSize / 2),
+                      ),
+                      width: iconSize,
+                      height: iconSize,
+                    ),
+                    if (!widget.drawNumbers && amenities[i].isIncomplete)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(iconSize / 6),
+                        ),
+                        width: iconSize / 3,
+                        height: iconSize / 3,
+                      ),
+                    if (widget.drawNumbers && i < 9)
+                      Container(
+                        padding: EdgeInsets.only(left: 1.0),
+                        child: Text(
+                          (i + 1).toString(),
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: iconSize - 3.0,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            if (!ref.watch(trackingProvider) || trackLocation == null)
+              PinMarker(mapCenter),
+          ],
+        ),
+        AttributionWidget(showAttribution ? imagery : null),
         // Settings button
-        OverlayButtonOptions(
+        OverlayButtonWidget(
           alignment: leftHand ? Alignment.topRight : Alignment.topLeft,
           padding: EdgeInsets.symmetric(
             horizontal: 0.0,
@@ -336,7 +406,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
         ),
         // Filter button
         if (widget.onFilterTap != null)
-          OverlayButtonOptions(
+          OverlayButtonWidget(
             alignment: leftHand ? Alignment.topLeft : Alignment.topRight,
             padding: EdgeInsets.symmetric(
               horizontal: 0.0,
@@ -349,7 +419,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
             onPressed: widget.onFilterTap!,
           ),
         // Tracking button
-        OverlayButtonOptions(
+        OverlayButtonWidget(
           alignment: leftHand ? Alignment.topLeft : Alignment.topRight,
           padding: EdgeInsets.symmetric(
             // horizontal: widget.onFilterTap == null ? 0.0 : 50.0,
@@ -364,7 +434,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
           },
           onLongPressed: () {
             if (ref.read(rotationProvider) != 0.0) {
-              ref.read(rotationProvider.state).state = 0.0;
+              ref.read(rotationProvider.notifier).state = 0.0;
               mapController.rotate(0.0);
             } else {
               ref.read(geolocationProvider.notifier).enableTracking(context);
@@ -372,7 +442,7 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
           },
         ),
         if (widget.drawZoomButtons)
-          ZoomButtonsOptions(
+          ZoomButtonsWidget(
             alignment: leftHand ? Alignment.bottomLeft : Alignment.bottomRight,
             padding: EdgeInsets.symmetric(
               horizontal: 0.0,
@@ -383,85 +453,6 @@ class _AmenityMapState extends ConsumerState<AmenityMap> {
                       : 20.0,
             ),
           ),
-      ],
-      nonRotatedChildren: [
-        if (showAttribution && imagery.attribution != null)
-          buildAttributionWidget(imagery),
-      ],
-      children: [
-        TileLayerWidget(
-          options: buildTileLayerOptions(imagery),
-        ),
-        LocationMarkerWidget(),
-        if (trackLocation != null)
-          CircleLayerWidget(
-            options: CircleLayerOptions(
-              circles: [
-                for (final objLocation in widget.otherObjects)
-                  CircleMarker(
-                    point: objLocation,
-                    color: Colors.black.withOpacity(0.4),
-                    radius: 2.0,
-                  ),
-              ],
-            ),
-          ),
-        MarkerLayerWidget(
-          options: MarkerLayerOptions(
-            markers: [
-              if (!ref.watch(trackingProvider) || trackLocation == null)
-                Marker(
-                  rotate: true,
-                  rotateOrigin: Offset(0.0, -5.0),
-                  rotateAlignment: Alignment.bottomCenter,
-                  point:
-                      mapCenter, // mapController.center throws late init exception
-                  anchorPos: AnchorPos.exactly(Anchor(15.0, 5.0)),
-                  builder: (ctx) => Icon(Icons.location_pin),
-                ),
-              for (var i = amenities.length - 1; i >= 0; i--)
-                Marker(
-                  point: amenities[i].location,
-                  rotate: true,
-                  builder: (ctx) => Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: getIconColor(amenities[i], legendCon)
-                              .withOpacity(widget.drawNumbers ? 0.7 : 1.0),
-                          borderRadius: BorderRadius.circular(iconSize / 2),
-                        ),
-                        width: iconSize,
-                        height: iconSize,
-                      ),
-                      if (!widget.drawNumbers && amenities[i].isIncomplete)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(iconSize / 6),
-                          ),
-                          width: iconSize / 3,
-                          height: iconSize / 3,
-                        ),
-                      if (widget.drawNumbers && i < 9)
-                        Container(
-                          padding: EdgeInsets.only(left: 1.0),
-                          child: Text(
-                            (i + 1).toString(),
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: iconSize - 3.0,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }

@@ -1,7 +1,9 @@
 import 'dart:math' as math;
+import 'package:every_door/helpers/pin_marker.dart';
 import 'package:every_door/helpers/tile_layers.dart';
 import 'package:every_door/providers/imagery.dart';
 import 'package:every_door/providers/location.dart';
+import 'package:every_door/widgets/attribution.dart';
 import 'package:every_door/widgets/loc_marker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -107,6 +109,7 @@ class _DirectionValuePageState extends ConsumerState<DirectionValuePage> {
   @override
   Widget build(BuildContext context) {
     final imagery = ref.watch(selectedImageryProvider);
+    final tileLayer = TileLayerOptions(imagery);
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -137,36 +140,34 @@ class _DirectionValuePageState extends ConsumerState<DirectionValuePage> {
           FlutterMap(
             mapController: controller,
             options: MapOptions(
-              center: widget.location,
-              zoom: 19.0,
+              initialCenter: widget.location,
+              initialZoom: 19.0,
               minZoom: 17.0,
               maxZoom: 20.0,
-              rotation: ref.watch(rotationProvider),
-              interactiveFlags: 0,
+              initialRotation: ref.watch(rotationProvider),
+              interactionOptions:
+                  InteractionOptions(flags: InteractiveFlag.none),
             ),
-            nonRotatedChildren: [
-              buildAttributionWidget(imagery),
-            ],
             children: [
-              TileLayerWidget(
-                options: buildTileLayerOptions(imagery),
+              AttributionWidget(imagery),
+              TileLayer(
+                urlTemplate: tileLayer.urlTemplate,
+                wmsOptions: tileLayer.wmsOptions,
+                tileProvider: tileLayer.tileProvider,
+                minNativeZoom: tileLayer.minNativeZoom,
+                maxNativeZoom: tileLayer.maxNativeZoom,
+                maxZoom: tileLayer.maxZoom,
+                tileSize: tileLayer.tileSize,
+                tms: tileLayer.tms,
+                subdomains: tileLayer.subdomains,
+                additionalOptions: tileLayer.additionalOptions,
+                userAgentPackageName: tileLayer.userAgentPackageName,
+                reset: tileResetController.stream,
               ),
               LocationMarkerWidget(tracking: false),
               if (direction == null)
-                MarkerLayerWidget(
-                  options: MarkerLayerOptions(
-                    markers: [
-                      Marker(
-                        point: widget.location,
-                        rotate: true,
-                        rotateOrigin: Offset(0.0, -5.0),
-                        rotateAlignment: Alignment.bottomCenter,
-                        anchorPos: AnchorPos.exactly(Anchor(15.0, 5.0)),
-                        builder: (ctx) =>
-                            Icon(Icons.location_pin, color: Colors.black),
-                      ),
-                    ],
-                  ),
+                MarkerLayer(
+                  markers: [PinMarker(widget.location)],
                 ),
             ],
           ),

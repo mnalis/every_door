@@ -13,7 +13,6 @@ import 'package:every_door/providers/api_status.dart';
 import 'package:every_door/providers/area.dart';
 import 'package:every_door/providers/changes.dart';
 import 'package:every_door/providers/database.dart';
-import 'package:every_door/providers/editor_settings.dart';
 import 'package:every_door/providers/osm_api.dart';
 import 'package:every_door/providers/road_names.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +20,7 @@ import 'package:flutter_map/flutter_map.dart' show LatLngBounds;
 import 'package:every_door/constants.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
+import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:proximity_hash/proximity_hash.dart';
@@ -29,13 +29,18 @@ import 'package:sqflite/utils/utils.dart';
 final osmDataProvider = ChangeNotifierProvider((ref) => OsmDataHelper(ref));
 
 class OsmDataHelper extends ChangeNotifier {
+  static final _logger = Logger('OsmDataHelper');
   final Ref _ref;
   int _length = 0;
   int _obsoleteLength = 0;
   Set<StreetAddress> _addressesWithFloors = {};
+  bool capitalizeNames = kCapitalizeNames;
+  List<Floor> floorNumbering = [];
 
   OsmDataHelper(this._ref) {
     _updateLength();
+    _updateCapitalizeNames();
+    updateFloorNumbering();
   }
 
   /// Number of OSM elements in the database.
@@ -53,6 +58,7 @@ class OsmDataHelper extends ChangeNotifier {
       whereArgs: [before.millisecondsSinceEpoch],
     );
     await _updateLength();
+    _updateCapitalizeNames();
     return count;
   }
 
@@ -120,6 +126,8 @@ class OsmDataHelper extends ChangeNotifier {
     });
     if (bounds != null) await _ref.read(downloadedAreaProvider).addArea(bounds);
     await _updateLength();
+    _updateCapitalizeNames();
+    updateFloorNumbering();
   }
 
   List<OsmChange> _wrapInChange(Iterable<OsmElement> elements,
@@ -159,11 +167,11 @@ class OsmDataHelper extends ChangeNotifier {
         .every((k) => k.startsWith('addr:') || kMetaTags.contains(k));
   }
 
-  Future<List<StreetAddress>> getAddressesAround(LatLng location,
-      {int limit = 4, bool includeAmenities = true}) async {
+  Future<List<OsmElement>> _getAddressedElementsAround(LatLng location,
+      {int radius = kVisibilityRadius}) async {
     final database = await _ref.read(databaseProvider).database;
     final hashes = createGeohashes(location.latitude, location.longitude,
-        kVisibilityRadius.toDouble(), kGeohashPrecision);
+        radius.toDouble(), kGeohashPrecision);
     final placeholders = List.generate(hashes.length, (index) => "?").join(",");
     final rows = await database.query(
       OsmElement.kTableName,
@@ -183,14 +191,22 @@ class OsmDataHelper extends ChangeNotifier {
         .map((e) => e.toElement(newId: -1));
     elements.addAll(changedElements);
 
+    return elements;
+  }
+
+  Future<List<StreetAddress>> getAddressesAround(LatLng location,
+      {int limit = 4, bool includeAmenities = true}) async {
+    final elements = await _getAddressedElementsAround(location);
+
     // Removed non-buildings if requested.
     if (!includeAmenities)
       elements.removeWhere((e) => !isBuildingOrAddressPoint(e.tags));
 
     // Hash addresses by distance.
+    const distance = DistanceEquirectangular();
     final Map<StreetAddress, double> addresses = {};
     for (final e in elements) {
-      final hash = StreetAddress.fromTags(e.tags, e.center);
+      final hash = StreetAddress.fromTags(e.tags, location: e.center);
       if (hash.isNotEmpty) {
         double dist = distance(location, e.center!);
         double? oldDist = addresses[hash];
@@ -203,6 +219,14 @@ class OsmDataHelper extends ChangeNotifier {
     results.sort((a, b) => addresses[a]!.compareTo(addresses[b]!));
     if (results.length > limit) return results.sublist(0, limit);
     return results;
+  }
+
+  Future<bool> isUniqueAddress(StreetAddress address, LatLng location) async {
+    final elements = await _getAddressedElementsAround(location);
+    final addresses = Counter(elements
+        .map((e) => StreetAddress.fromTags(e.tags))
+        .where((a) => a.isNotEmpty));
+    return addresses[address] == 1;
   }
 
   Future updateAddressesWithFloors() async {
@@ -241,6 +265,63 @@ class OsmDataHelper extends ChangeNotifier {
 
   bool hasMultipleFloors(StreetAddress address) =>
       _addressesWithFloors.contains(address);
+
+  /// Returns common floors for level=0, level=1 and level=2.
+  /// If lower levels are missing or ambiguous, higher levels not returned.
+  Future<List<Floor>> updateFloorNumbering([LatLng? location]) async {
+    final database = await _ref.read(databaseProvider).database;
+    final hashes = location == null
+        ? const []
+        : createGeohashes(location.latitude, location.longitude,
+            kLocalFloorsRadius.toDouble(), kGeohashPrecision);
+    final placeholders = List.generate(hashes.length, (index) => "?").join(",");
+    final rows = await database.query(
+      OsmElement.kTableName,
+      where: hashes.isEmpty
+          ? "tags like '%addr:floor%'"
+          : "geohash in ($placeholders) and tags like '%addr:floor%'",
+      whereArgs: hashes,
+    );
+    final elements = rows.map((row) => OsmElement.fromJson(row));
+    final elementTags = elements.map((row) => row.tags).toList();
+
+    // Add all new changes with floors
+    final changedElements = _ref.read(changesProvider).all();
+    elementTags.addAll(changedElements.map((e) => e.getFullTags()));
+
+    // Count addr:floor values for levels=0..kMaxFloor.
+    final floors = <int, Counter<String>>{};
+    const kMaxFloor = 1;
+    for (final tags in elementTags) {
+      final newFloors = MultiFloor.fromTags(tags);
+      for (final floor in newFloors.floors) {
+        final level = floor.level?.roundToDouble();
+        if (level != null && floor.floor != null) {
+          if (level == floor.level && level <= kMaxFloor && level >= 0) {
+            final intLevel = level.toInt();
+            if (!floors.containsKey(intLevel))
+              floors[intLevel] = Counter<String>();
+            floors[intLevel]!.add(floor.floor!);
+          }
+        }
+      }
+    }
+
+    // Iterate over levels and check that floors are unambiguous enough.
+    final result = <Floor>[];
+    for (int i = 0; i <= kMaxFloor; i++) {
+      if (!floors.containsKey(i)) break;
+      final firstTwo = floors[i]!.mostOccurent(2).toList();
+      if (firstTwo.first.count < 3) break;
+      // 3 vs 1 ok, 6 vs 2 etc.
+      if (firstTwo.length > 1 && firstTwo[1].count * 3 > firstTwo.first.count)
+        break;
+      result.add(Floor(level: i.toDouble(), floor: firstTwo.first.item));
+    }
+
+    floorNumbering = result;
+    return result;
+  }
 
   Future<List<Floor>> getFloorsAround(LatLng location,
       [StreetAddress? address]) async {
@@ -371,18 +452,49 @@ class OsmDataHelper extends ChangeNotifier {
         .mostOccurentItems(cutoff: count < 6 ? 2 : (count / 3).ceil())
         .toSet();
 
-    // If no results, use the default.
-    if (result.isEmpty) {
-      result.addAll(_ref
-          .read(editorSettingsProvider)
-          .defaultPayment
-          .map((e) => 'payment:$e'));
-    }
-
-    // Ensure visa is listed alongside mastercard.
-    if (result.contains('payment:visa')) result.add('payment:mastercard');
-    if (result.contains('payment:mastercard')) result.add('payment:visa');
     return result;
+  }
+
+  Future<bool> _updateCapitalizeNames([LatLng? location]) async {
+    final database = await _ref.read(databaseProvider).database;
+    final List<String> hashes = location == null
+        ? const []
+        : createGeohashes(location.latitude, location.longitude,
+            kBigRadius.toDouble(), kGeohashPrecision);
+    final placeholders = List.generate(hashes.length, (index) => "?").join(",");
+    final rows = await database.query(
+      OsmElement.kTableName,
+      where: placeholders.isEmpty
+          ? "tags like '%\"name\"%'"
+          : "geohash in ($placeholders) and tags like '%\"name\"%'",
+      whereArgs: hashes,
+    );
+    // Get names from the found elements.
+    final elements = rows.map((row) => OsmElement.fromJson(row));
+    final names =
+        elements.map((el) => OsmChange(el)['name']).whereType<String>();
+    // Split in words and keep those that have at least two.
+    final kNotWord = RegExp(r'\P{Letter}+', unicode: true);
+    final split = names
+        .map((n) => n.split(kNotWord).where((s) => s.isNotEmpty))
+        .where((el) => el.length >= 2)
+        .map((el) => el.skip(1));
+
+    // Count number of capitalized words.
+    final words = split.expand((w) => w).toList(); // do the processing
+    final kCapitalized = RegExp(r'^\p{Lu}(?:$|\p{Ll})', unicode: true);
+    final kNotCapitalized = RegExp(r'^\p{Ll}', unicode: true);
+    final cap =
+        words.where((w) => kCapitalized.matchAsPrefix(w) != null).length;
+    final noncap =
+        words.where((w) => kNotCapitalized.matchAsPrefix(w) != null).length;
+
+    // We need at least 3 named amenities to decide.
+    _logger.fine(
+        'Found $cap capitalized and $noncap non-capitalized names in ${words.length} words.');
+    if (cap + noncap < 3) return kCapitalizeNames;
+    capitalizeNames = cap > noncap;
+    return capitalizeNames;
   }
 
   Future<OsmChange?> findPossibleDuplicate(OsmChange amenity) async {

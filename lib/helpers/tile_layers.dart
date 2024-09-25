@@ -18,8 +18,8 @@ class CachedTileProvider extends TileProvider {
   CachedTileProvider();
 
   @override
-  ImageProvider getImage(Coords<num> coords, TileLayerOptions options) {
-    final url = getTileUrl(coords, options);
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
+    final url = getTileUrl(coordinates, options);
     // print(url);
     return CachedNetworkImageProvider(
       url,
@@ -45,19 +45,19 @@ class CachedBingTileProvider extends TileProvider {
   }
 
   @override
-  String getTileUrl(Coords<num> coords, TileLayerOptions options) {
+  String getTileUrl(TileCoordinates coordinates, TileLayer options) {
     final quadkey =
-        _tileToQuadkey(coords.x.round(), coords.y.round(), coords.z.round());
-    final tileUrl = super.getTileUrl(coords, options);
+        _tileToQuadkey(coordinates.x.round(), coordinates.y.round(), coordinates.z.round());
+    final tileUrl = super.getTileUrl(coordinates, options);
     return tileUrl
         .replaceFirst('_QUADKEY_', quadkey)
         .replaceFirst('_CULTURE_', 'en');
   }
 
   @override
-  ImageProvider getImage(Coords<num> coords, TileLayerOptions options) {
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
     return CachedNetworkImageProvider(
-      getTileUrl(coords, options),
+      getTileUrl(coordinates, options),
       cacheManager: TileCacheManager.instance,
       headers: headers,
     );
@@ -122,62 +122,71 @@ WMSTileLayerOptions _buildWMSOptions(String url, Imagery imagery) {
   );
 }
 
-TileLayerOptions buildTileLayerOptions(Imagery imagery) {
-  String url = imagery.url.replaceAll('{zoom}', '{z}');
-
-  if (imagery.type == ImageryType.bing) {
-    url = ImageryProvider.bingUrlTemplate
-            ?.replaceFirst('{quadkey}', '_QUADKEY_')
-            .replaceFirst('{culture}', '_CULTURE_') ??
-        '';
-  }
-
-  bool tms = false;
-  List<String> subdomains = [];
+class TileLayerOptions {
+  String? urlTemplate;
   WMSTileLayerOptions? wmsOptions;
+  late final TileProvider tileProvider;
+  late final int minNativeZoom;
+  late final int maxNativeZoom;
+  final double maxZoom = 22;
+  late final double tileSize;
+  bool tms = false;
+  final List<String> subdomains = [];
+  final Map<String, String> additionalOptions = const {'a': 'b'};
+  final String userAgentPackageName = 'info.zverev.ilya.every_door';
 
-  switch (imagery.type) {
-    case ImageryType.tms:
-    case ImageryType.bing:
-      if (url.contains('{-y}')) {
-        url = url.replaceFirst('{-y}', '{y}');
-        tms = true;
-      }
+  TileLayerOptions(Imagery imagery) {
+    String url = imagery.url.replaceAll('{zoom}', '{z}');
 
-      if (url.contains('{switch:')) {
-        final match = RegExp(r'\{switch:([^}]+)\}').firstMatch(url)!;
-        subdomains = match.group(1)!.split(',').map((e) => e.trim()).toList();
-        url = url.substring(0, match.start) + '{s}' + url.substring(match.end);
-      }
-      break;
-    case ImageryType.wms:
-      wmsOptions = _buildWMSOptions(url, imagery);
+    if (imagery.type == ImageryType.bing) {
+      url = ImageryProvider.bingUrlTemplate
+              ?.replaceFirst('{quadkey}', '_QUADKEY_')
+              .replaceFirst('{culture}', '_CULTURE_') ??
+          '';
+    }
+
+    switch (imagery.type) {
+      case ImageryType.tms:
+      case ImageryType.bing:
+        if (url.contains('{-y}')) {
+          url = url.replaceFirst('{-y}', '{y}');
+          tms = true;
+        }
+
+        if (url.contains('{switch:')) {
+          final match = RegExp(r'\{switch:([^}]+)\}').firstMatch(url)!;
+          subdomains.addAll(match.group(1)!.split(',').map((e) => e.trim()));
+          url = url.substring(0, match.start) + '{s}' + url.substring(match.end);
+        }
+        urlTemplate = url;
+        break;
+      case ImageryType.wms:
+        wmsOptions = _buildWMSOptions(url, imagery);
+        break;
+    }
+
+    tileProvider = imagery.type == ImageryType.bing
+        ? CachedBingTileProvider()
+        : CachedTileProvider();
+
+    minNativeZoom = imagery.minZoom;
+    maxNativeZoom = imagery.maxZoom;
+    tileSize = imagery.tileSize.toDouble();
   }
 
-  final TileProvider tileProvider = imagery.type == ImageryType.bing
-      ? CachedBingTileProvider()
-      : CachedTileProvider();
-
-  return TileLayerOptions(
-    urlTemplate: url,
-    wmsOptions: wmsOptions,
-    tileProvider: tileProvider,
-    minNativeZoom: imagery.minZoom.toDouble(),
-    maxNativeZoom: imagery.maxZoom.toDouble(),
-    maxZoom: 22,
-    tileSize: imagery.tileSize.toDouble(),
-    tms: tms,
-    subdomains: subdomains,
-    additionalOptions: {'a': 'b'},
-    userAgentPackageName: 'info.zverev.ilya.every_door',
-  );
-}
-
-Widget buildAttributionWidget(Imagery imagery, [bool showAttribution = true]) {
-  if (!showAttribution || imagery.attribution == null) return Container();
-  return AttributionWidget(
-      attributionBuilder: (context) => Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Text(imagery.attribution!),
-          ));
+  TileLayer buildTileLayer() {
+    return TileLayer(
+      urlTemplate: urlTemplate,
+      wmsOptions: wmsOptions,
+      tileProvider: tileProvider,
+      minNativeZoom: minNativeZoom,
+      maxNativeZoom: maxNativeZoom,
+      maxZoom: maxZoom,
+      tileSize: tileSize,
+      tms: tms,
+      subdomains: subdomains,
+      additionalOptions: additionalOptions,
+      userAgentPackageName: userAgentPackageName,
+    );
+  }
 }

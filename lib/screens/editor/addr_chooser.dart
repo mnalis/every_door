@@ -1,8 +1,10 @@
 import 'package:every_door/constants.dart';
+import 'package:every_door/helpers/pin_marker.dart';
 import 'package:every_door/models/address.dart';
 import 'package:every_door/providers/location.dart';
 import 'package:every_door/providers/imagery.dart';
 import 'package:every_door/providers/osm_data.dart';
+import 'package:every_door/widgets/attribution.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -45,6 +47,7 @@ class _AddrChooserPageState extends ConsumerState<AddrChooserPage> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final imagery = ref.watch(selectedImageryProvider);
+    final tileLayer = TileLayerOptions(imagery);
 
     return Scaffold(
       appBar: AppBar(
@@ -63,71 +66,67 @@ class _AddrChooserPageState extends ConsumerState<AddrChooserPage> {
       ),
       body: FlutterMap(
         options: MapOptions(
-          center: widget.location,
-          zoom: 18.0,
+          initialCenter: widget.location,
+          initialZoom: 18.0,
           minZoom: 17.0,
           maxZoom: 20.0,
-          rotation: ref.watch(rotationProvider),
-          rotationThreshold: kRotationThreshold,
-          interactiveFlags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
+          initialRotation: ref.watch(rotationProvider),
+          interactionOptions: InteractionOptions(
+            flags: InteractiveFlag.all -
+                InteractiveFlag.flingAnimation -
+                InteractiveFlag.rotate,
+            rotationThreshold: kRotationThreshold,
+          ),
         ),
-        nonRotatedChildren: [
-          buildAttributionWidget(imagery),
-        ],
         children: [
-          TileLayerWidget(
-            options: buildTileLayerOptions(imagery),
+          AttributionWidget(imagery),
+          TileLayer(
+            urlTemplate: tileLayer.urlTemplate,
+            wmsOptions: tileLayer.wmsOptions,
+            tileProvider: tileLayer.tileProvider,
+            minNativeZoom: tileLayer.minNativeZoom,
+            maxNativeZoom: tileLayer.maxNativeZoom,
+            maxZoom: tileLayer.maxZoom,
+            tileSize: tileLayer.tileSize,
+            tms: tileLayer.tms,
+            subdomains: tileLayer.subdomains,
+            additionalOptions: tileLayer.additionalOptions,
+            userAgentPackageName: tileLayer.userAgentPackageName,
+            reset: tileResetController.stream,
           ),
-          MarkerLayerWidget(
-            options: MarkerLayerOptions(
-              markers: [
+          MarkerLayer(
+            markers: [
+              PinMarker(widget.location),
+              for (final addr in addresses)
                 Marker(
-                  point: widget.location,
-                  rotate: true,
-                  rotateOrigin: Offset(0.0, -5.0),
-                  rotateAlignment: Alignment.bottomCenter,
-                  anchorPos: AnchorPos.exactly(Anchor(15.0, 5.0)),
-                  builder: (ctx) => Icon(Icons.location_pin),
-                ),
-              ],
-            ),
-          ),
-          MarkerLayerWidget(
-            options: MarkerLayerOptions(
-              markers: [
-                for (final addr in addresses)
-                  Marker(
                     point: addr.location ?? LatLng(0.0, 0.0),
                     rotate: true,
                     width: 100.0,
                     height: 50.0,
-                    builder: (BuildContext context) {
-                      return GestureDetector(
-                        child: Center(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.black.withOpacity(0.3)),
-                              borderRadius: BorderRadius.circular(10.0),
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              vertical: 5.0,
-                              horizontal: 10.0,
-                            ),
-                            child: Text(
-                              addr.housenumber ?? addr.housename ?? '?',
-                              style: kFieldTextStyle,
-                            ),
+                    child: GestureDetector(
+                      child: Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: Colors.black.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(10.0),
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 5.0,
+                            horizontal: 10.0,
+                          ),
+                          child: Text(
+                            addr.housenumber ?? addr.housename ?? '?',
+                            style: kFieldTextStyle,
                           ),
                         ),
-                        onTap: () {
-                          Navigator.pop(context, addr);
-                        },
-                      );
-                    },
-                  ),
-              ],
-            ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context, addr);
+                      },
+                    )),
+            ],
           ),
         ],
       ),

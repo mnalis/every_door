@@ -71,15 +71,20 @@ class OsmApiHelper {
   }
 
   Future<List<OsmElement>> elements(Iterable<OsmId> ids) async {
+    const kBatchSize = 500; // elements in a single request
     var client = http.Client();
     try {
       final List<OsmElement> elements = [];
       for (final typ in OsmElementType.values) {
         final typeIds = ids.where((id) => id.type == typ);
-        if (typeIds.isNotEmpty) {
+        for (int i = 0; i < (typeIds.length / kBatchSize).ceil(); i++) {
           final typesName = kOsmElementTypeName[typ]! + 's';
           final url = Uri.https(kOsmEndpoint, '/api/0.6/$typesName', {
-            typesName: typeIds.map((e) => e.ref).join(','),
+            typesName: typeIds
+                .skip(kBatchSize * i)
+                .take(kBatchSize)
+                .map((e) => e.ref)
+                .join(','),
           });
           var request = http.Request('GET', url);
           var response = await client.send(request);
@@ -489,7 +494,7 @@ class OsmApiHelper {
       }
       final chProv = _ref.read(changesProvider);
       await chProv.clearChanges(includeErrored: clearErrored, ids: changeIds);
-      _updateElementsAfterUpload(updates);
+      await _updateElementsAfterUpload(updates);
       return updates.length;
     } finally {
       // Close the changeset.

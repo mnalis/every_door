@@ -3,7 +3,9 @@ import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/languages.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:every_door/models/field.dart';
+import 'package:every_door/providers/osm_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -12,34 +14,29 @@ class NamePresetField extends PresetField {
   final bool capitalize;
 
   const NamePresetField({
-    required String key,
-    required String label,
-    IconData? icon,
-    required String placeholder,
-    FieldPrerequisite? prerequisite,
+    required super.key,
+    required super.label,
+    super.icon,
+    required String super.placeholder,
+    super.prerequisite,
     this.capitalize = true,
-  }) : super(
-            key: key,
-            label: label,
-            icon: icon,
-            placeholder: placeholder,
-            prerequisite: prerequisite);
+  });
 
   @override
   buildWidget(OsmChange element) => NameInputField(this, element);
 }
 
-class NameInputField extends StatefulWidget {
+class NameInputField extends ConsumerStatefulWidget {
   final NamePresetField field;
   final OsmChange element;
 
   const NameInputField(this.field, this.element);
 
   @override
-  State<NameInputField> createState() => _NameInputFieldState();
+  ConsumerState<NameInputField> createState() => _NameInputFieldState();
 }
 
-class _NameInputFieldState extends State<NameInputField> {
+class _NameInputFieldState extends ConsumerState<NameInputField> {
   final _controllers = <String, TextEditingController>{};
   final _languages = <String>[];
   static final _langData = LanguageData();
@@ -80,6 +77,7 @@ class _NameInputFieldState extends State<NameInputField> {
 
   addLanguage(String key) {
     if (_controllers.containsKey(key)) return;
+    if (key.endsWith(':signed') || key.contains('19')) return;
     _controllers[key] = TextEditingController(text: widget.element[key] ?? '');
     _languages.add(key);
   }
@@ -102,27 +100,10 @@ class _NameInputFieldState extends State<NameInputField> {
 
   openLanguageChooser() async {
     final String? result = await showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ResponsiveGridList(
-              minItemWidth: 130.0,
-              children: [
-                for (final lang in _langData.languages)
-                  ListTile(
-                    visualDensity: VisualDensity.compact,
-                    title: Text(lang.nameLoc, style: kFieldTextStyle),
-                    subtitle: Text(lang.nameEn),
-                    tileColor: kFieldColor.withOpacity(0.2),
-                    onTap: () {
-                      Navigator.pop(context, lang.key);
-                    },
-                  ),
-              ],
-            ),
-          );
-        });
+      context: context,
+      builder: (_) => NameLanguageChooser(langData: _langData),
+    );
+
     if (result != null) {
       setState(() {
         addLanguage(result);
@@ -148,9 +129,16 @@ class _NameInputFieldState extends State<NameInputField> {
 
     // This is a hack to auto-focus on the name when the element was just created.
     bool needFocus = widget.element.isNew &&
-        widget.element['name'] == null &&
+        widget.field.key == 'name' &&
+        widget.element[widget.field.key] == null &&
         DateTime.now().difference(widget.element.updated) <
             Duration(seconds: 3);
+
+    final capitalization = !widget.field.capitalize
+        ? TextCapitalization.none
+        : ref.watch(osmDataProvider).capitalizeNames
+            ? TextCapitalization.words
+            : TextCapitalization.sentences;
 
     return Column(
       children: [
@@ -161,9 +149,7 @@ class _NameInputFieldState extends State<NameInputField> {
               child: TextField(
                 controller: _controllers[''],
                 autofocus: needFocus,
-                textCapitalization: widget.field.capitalize
-                    ? TextCapitalization.sentences
-                    : TextCapitalization.none,
+                textCapitalization: capitalization,
                 decoration: InputDecoration(
                   hintText: widget.field.placeholder,
                   labelText:
@@ -204,9 +190,7 @@ class _NameInputFieldState extends State<NameInputField> {
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: TextField(
                     controller: _controllers[key],
-                    textCapitalization: widget.field.capitalize
-                        ? TextCapitalization.sentences
-                        : TextCapitalization.none,
+                    textCapitalization: capitalization,
                     decoration: InputDecoration(
                       hintText: _langData.dataForKey(key)?.nameLoc ?? key,
                     ),
@@ -237,6 +221,71 @@ class _NameInputFieldState extends State<NameInputField> {
           ),
         SizedBox(height: 5.0),
       ],
+    );
+  }
+}
+
+class NameLanguageChooser extends StatefulWidget {
+  final LanguageData langData;
+
+  const NameLanguageChooser({super.key, required this.langData});
+
+  @override
+  State<NameLanguageChooser> createState() => _NameLanguageChooserState();
+}
+
+class _NameLanguageChooserState extends State<NameLanguageChooser> {
+  String filter = "";
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final languages = widget.langData.languages.where((lang) =>
+        filter.isEmpty ||
+        lang.nameLoc.toLowerCase().contains(filter) ||
+        lang.nameEn.toLowerCase().contains(filter) ||
+        lang.isoCode.contains(filter));
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 8.0,
+        left: 8.0,
+        right: 8.0,
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: ResponsiveGridList(
+              minItemWidth: 130.0,
+              children: [
+                for (final lang in languages)
+                  ListTile(
+                    visualDensity: VisualDensity.compact,
+                    title: Text(lang.nameLoc, style: kFieldTextStyle),
+                    subtitle: Text(lang.nameEn),
+                    tileColor: kFieldColor.withOpacity(0.2),
+                    onTap: () {
+                      Navigator.pop(context, lang.key);
+                    },
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: 8.0),
+          TextField(
+            decoration: InputDecoration(
+              fillColor: Theme.of(context).canvasColor,
+              filled: true,
+              hintText: loc.fieldNameLangSearch,
+            ),
+            onChanged: (value) {
+              setState(() {
+                filter = value.trim().toLowerCase();
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 }

@@ -32,7 +32,7 @@ class GeolocationController extends StateNotifier<LatLng?> {
   late DateTime _stateTime;
 
   GeolocationController(this._ref) : super(null) {
-    _stateTime = DateTime.now();
+    _stateTime = DateTime.now().subtract(Duration(hours: 1));
     _statSub = Geolocator.getServiceStatusStream().listen((status) {
       if (status == ServiceStatus.enabled) {
         enableTracking();
@@ -47,6 +47,7 @@ class GeolocationController extends StateNotifier<LatLng?> {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return AndroidSettings(
         accuracy: LocationAccuracy.best,
+        intervalDuration: Duration(seconds: 1),
         forceLocationManager: _ref.read(forceLocationProvider),
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -114,7 +115,7 @@ class GeolocationController extends StateNotifier<LatLng?> {
   }
 
   disableTracking() {
-    _ref.read(trackingProvider.state).state = false;
+    _ref.read(trackingProvider.notifier).state = false;
   }
 
   enableTracking([BuildContext? context]) async {
@@ -152,7 +153,7 @@ class GeolocationController extends StateNotifier<LatLng?> {
     }
 
     if (_locSub != null) {
-      _ref.read(trackingProvider.state).state = true;
+      _ref.read(trackingProvider.notifier).state = true;
     }
   }
 
@@ -170,7 +171,7 @@ class GeolocationController extends StateNotifier<LatLng?> {
     }
 
     // Update state location only if it's far, time passed, or it is null.
-    const kLocationThreshold = 10; // meters
+    const kLocationThreshold = 5; // meters
     const kLocationInterval = Duration(seconds: 10);
     final oldState = state;
 

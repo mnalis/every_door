@@ -1,14 +1,15 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
     }
-}
-
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -21,20 +22,36 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
 android {
-    compileSdkVersion 33
+
+    flavorDimensions += "default"
+
+    productFlavors {
+        prod {
+            dimension "default"
+        }
+        beta {
+            dimension "default"
+            applicationIdSuffix ".beta"
+            resValue "string", "app_name", "Every Door β"
+        }
+    }
+
+    compileSdk 34
+    namespace "info.zverev.ilya.every_door"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        // https://stackoverflow.com/a/77629542/1297601
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
+    }
+
+    kotlin {
+        jvmToolchain(17)
     }
 
     sourceSets {
@@ -43,8 +60,9 @@ android {
 
     defaultConfig {
         applicationId "info.zverev.ilya.every_door.mn"
-        minSdkVersion 18
-        targetSdkVersion 31
+        resValue "string", "app_name", "Every Door"
+        minSdk 21
+        targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -63,7 +81,7 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.google.errorprone:error_prone_annotations:2.27.1'
 }
 
 // Do this for an F-Droid release I guess

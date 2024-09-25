@@ -1,5 +1,144 @@
 # Every Door App Change Log
 
+## 5.2
+
+_Released on 2024-09-24_
+
+* Added waterway features (like dams) support, snapped to rivers.
+* Scale bar for the map chooser.
+* Allowing entering arbitrary keys in the raw tags panel.
+* Not changing zoom when switching to the notes mode.
+* Undo in the notes mode works on labels too.
+* Redirects in QR codes are automatically resolved (if online).
+* Checkmark tap area now covers the entire height of a cell.
+* Updated all presets and imagery layers.
+* New supported languages: Greek (thanks Jim Kats) and Indonesian (thanks teamediacommunity).
+
+## 5.1
+
+_Released on 2024-05-29_
+
+* Added the recent walked path display as small blue dots.
+* GeoScribbles drawing is locked by default.
+* QR code scanner for the website field.
+* When deleting an amenity with a unique address, suggest keeping the address.
+* Now possible to move nodes that are relation members.
+* Button to mark a building demolished.
+* Fixed a blue marker for unmovable objects in the editor.
+* Hopefully fixed the white map when adding an object on iOS.
+* Location on Android is now updated once a second (thanks @freeExec for a hint).
+* Dotted scribble lines are now dashed (now supported in `flutter_map` 7.0).
+* Fixed all missing field name translations.
+* Minimal supported Android version is 5.0 now, due to the Flutter upgrade.
+
+## 5.0
+
+_Released on 2024-05-06_
+
+### Highlights
+
+* The 4th mode for notes is feature-complete. Try drawing things!
+* Days of week are displayed in a local language.
+* In combo field value lists, can search by translated values.
+* Always suggesting floor tags for levels 0 and 1.
+
+### Other
+
+* Allowing most interactions on maps.
+* Allowing deletion of point buildings.
+* Airport gates can be added or edited in micromapping mode.
+* Location marker is now better visible against dark backgrounds.
+* Hopefully fixed the `PlatformException` when logging in to OSM.
+* Hopefully fixed the issue when you upload changes and then momentarily see the old data.
+* Supporting locationSets for presets, fixing duplicate presets in the list.
+* Speed fields are not filtered out now.
+* Removed the password login button.
+* Switched to Dart 3 and upgraded `flutter_map` to version 6.
+* Minimal supported iOS version is 12 now.
+* Translations into Estonian (thanks August Murasev Frokjaer), Odia (thanks Soumendra Kumar Sahoo),
+  and major updates to Croatian (thanks Milo Ivir).
+
+## 4.1
+
+_Released on 2023-11-06_
+
+* Changed default card payment options to `debit_cards` and `credit_cards`.
+* Fixed word capitalization for description and other similar fields.
+* You can find a preset by aliases now.
+* Fixed amenity warnings not being shown on editor open.
+* For combo boxes, options from a preset are prioritized over taginfo.
+* Marking a shop on a building closed does not remove it from the map.
+
+## 4.0
+
+_Released on 2023-10-07_
+
+### Highlights
+
+* Hopefully GPS works much better now, thanks to Jeroeen Weener for
+  [fixing](https://github.com/Baseflow/flutter-geolocator/issues/1114) multiple geolocation issues.
+* Switched the default imagery to Mapbox and disabled Maxar (which has forsaken us).
+* Updated the Bing imagery key.
+* Increased minimum Android version to 4.4.
+* Card payment settings were moved to the editor pane; introducing local card payment defaults.
+* Name capitalization style (words vs sentences) is now detected from the map.
+* New notes are marked with the `#EveryDoor` hashtag (thanks @deevroman).
+
+### Editor
+
+* Country-specific fields were not filtered properly, leading to duplicate fields in the editor.
+* Support for `roadheight` fields (e.g. `maxheight`).
+* Removed the `check_date` field from the editor.
+* Allowing adding breaks to opening hours intervals spanning midnight.
+* Support for `traffic_calming=table` checkbox.
+* Warning when adding an unsupported object (not visible on the map).
+* Warning when adding an amenity from the micromapping mode or vice-versa.
+* Editable addresses in forms for buildings.
+* Forbade changing buildings and entrances types (to amenities).
+* Added `addr:postcode` field to all presets with addresses, including buildings.
+* Added searching to the language chooser.
+
+### Other
+
+* Snapping `stop_position` to the nearest highway or railway.
+* Mentioning addresses in changeset comments properly.
+* Log can be copied now (thanks @ann-who).
+* Increased max zoom when placing an object (thanks @ann-who).
+* In the language settings panel, the device language is placed first (thanks @ann-who).
+* Fixed error 414 when uploading 700+ changed nodes at once.
+* Prefix could override an existing main tag (e.g. `was:amenity` vs `shop`).
+* For letter boxes, `post:*` address fields are now editable.
+* OSM Note comment dates are now displayed.
+* Added option for `roof:levels=0`.
+
+## 3.1
+
+_Released on 2023-06-03_
+
+* Updated Maxar and Mapbox imagery keys.
+* Supporting tagging schema v6, added hundred new presets.
+* Some POI like churches and libraries have reduced obsoletion rate (1 year).
+* Deleting buildings via lifecycle prefixes is forbidden now.
+* Added `block_number` field for japanese addresses.
+* `name:signed` is not a language suffix.
+* When downloading data for an area, do not delete new notes (but changes
+  to existing notes would be lost though).
+* Purge non-modified notes when purging all data.
+* Update all secondary tags when changing a type for an amenity.
+* Fixed error when after uploading new amenities and editing them, duplicates
+  might have appeared.
+* Pasting a `wikimedia_commons` value strips it of wiki formatting.
+* Fixed long press on the sharing icon at the raw tags panel.
+* Snack bar when removing a change does not time out for some reason.
+  Forcibly closing it when leaving the changes list.
+* Switched the editing page to a full screen dialog for better UX on iOS.
+* Allow 1-character Japanese or Chinese search queries.
+* Allow January dates on specific days opening\_hours editor.
+* More emoji for POI types (thanks @ivanbranco and @neuschaefer).
+* Translations into Finnish (thanks Lasse Liehu), Marathi (thanks संकेत गराडे),
+  and Hungarian (thanks Balázs Úr) languages, and major updates to Punjabi
+  (both variants) and Persian.
+
 ## 3.0
 
 _Released on 2022-10-25_

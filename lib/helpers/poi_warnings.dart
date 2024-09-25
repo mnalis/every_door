@@ -44,7 +44,8 @@ String? getWarningForAmenity(OsmChange amenity, AppLocalizations loc) {
     return loc.warningFixme(fixmeValue);
   }
 
-  final mainKey = getMainKey(amenity.getFullTags(true));
+  final tags = amenity.getFullTags(true);
+  final mainKey = getMainKey(tags);
   if (mainKey != null &&
       _kTagsWithoutYesValue.contains(mainKey) &&
       amenity[mainKey] == 'yes') {
@@ -54,8 +55,12 @@ String? getWarningForAmenity(OsmChange amenity, AppLocalizations loc) {
   final int ageInDays = DateTime.now()
       .difference(amenity.element?.timestamp ?? DateTime.now())
       .inDays;
-  if (ageInDays >= kOldAmenityWarning && amenity.isOld) {
+  if (isAmenityTags(tags) && ageInDays >= kOldAmenityWarning && amenity.isOld) {
     return loc.warningTooOld(loc.years((ageInDays / 365).round()));
+  }
+
+  if (!isGoodTags(tags)) {
+    return loc.warningUnsupported;
   }
 
   return null;

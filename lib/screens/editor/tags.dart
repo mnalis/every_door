@@ -74,14 +74,15 @@ class _TagEditorPageState extends State<TagEditorPage> {
         actions: [
           if (!widget.amenity.isNew)
             GestureDetector(
-              child: IconButton(
-                // TODO: copy to clipboard?
-                // https://stackoverflow.com/questions/55885433/flutter-dart-how-to-add-copy-to-clipboard-on-tap-to-a-app
-                onPressed: () {
-                  Share.share(_getUrl());
-                },
-                icon: Icon(Icons.share),
+              child: Semantics(
+                // We need to handle long press ourselves, but keep the semantics.
                 tooltip: loc.tagsShare,
+                child: IconButton(
+                  onPressed: () {
+                    Share.share(_getUrl());
+                  },
+                  icon: Icon(Icons.share),
+                ),
               ),
               onLongPress: () {
                 Clipboard.setData(ClipboardData(text: _getUrl())).then((_) {
@@ -146,9 +147,9 @@ class _TagEditorPageState extends State<TagEditorPage> {
                       ),
                       IconButton(
                         icon: Icon(widget.amenity.newTags.containsKey(key) &&
-                            (widget.amenity.element?.tags
-                                .containsKey(key) ??
-                                false)
+                                (widget.amenity.element?.tags
+                                        .containsKey(key) ??
+                                    false)
                             ? Icons.undo
                             : Icons.clear),
                         tooltip: widget.amenity.newTags.containsKey(key) &&
@@ -204,7 +205,7 @@ class _TagEditorPageState extends State<TagEditorPage> {
 }
 
 class NewTagPanel extends StatefulWidget {
-  const NewTagPanel({Key? key}) : super(key: key);
+  const NewTagPanel({super.key});
 
   @override
   State<NewTagPanel> createState() => _NewTagPanelState();
@@ -247,7 +248,12 @@ class _NewTagPanelState extends State<NewTagPanel> {
                       autofocus: true,
                       textCapitalization: TextCapitalization.none,
                       textInputAction: TextInputAction.next,
-                      onFieldSubmitted: (value) => onSubmitted(),
+                      // onFieldSubmitted: (value) => onSubmitted(),
+                      onFieldSubmitted: (value) {
+                        // Move focus to the next one.
+                        _key = value.trim();
+                        _valueFocus.requestFocus();
+                      },
                       onChanged: (value) {
                         _key = value.trim();
                       },

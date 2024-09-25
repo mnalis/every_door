@@ -27,7 +27,7 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{Stažen {count} prvek.}, =few{Staženy {count} prvky.}, =other{Staženo {count} prvků.}}",
+  "dataDownloadedCount": "{count,plural, =1{Stažen {count} prvek.} few{Staženy {count} prvky.} other{Staženo {count} prvků.}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
@@ -66,7 +66,7 @@
   "@navImagery": {
     "description": "Tooltip for the map / imagery button on the nav panel."
   },
-  "tileDragTheMap": "Běžte prosím blíže k čemukoli, posuňte mapu nebo přidejte chybějící bod.",
+  "tileDragTheMap": "Přesuňte se prosím blíže k něčemu, posuňte mapu nebo přidejte chybějící bod.",
   "@tileDragTheMap": {
     "description": "Message displayed when there is nothing around."
   },
@@ -911,7 +911,7 @@
   "@accountPasswordWarningTitle": {
     "description": "Title for the warning dialog about keeping passwords on the device."
   },
-  "settingsPurgedMessage": "{count,plural, =1{Vymazán {count} prvek}, =few{Vymazány {count} prvky}, =other{Vymazáno {count} prvků}}",
+  "settingsPurgedMessage": "{count,plural, =1{Vymazán {count} prvek} few{Vymazány {count} prvky} other{Vymazáno {count} prvků}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -962,7 +962,7 @@
   "@accountUnreadMail": {
     "description": "Label for the number of unread private messages a user has."
   },
-  "changesCount": "{count,plural, =1{{count} změna}, =few{{count} změny}, =other{{count} změn}}",
+  "changesCount": "{count,plural, =1{{count} změna} few{{count} změny} other{{count} změn}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -1121,7 +1121,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count} rok}, =few{{count} roky}, =other{{count} let}}",
+  "years": "{count,plural, =1{{count} rok} few{{count} roky} other{{count} let}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1131,5 +1131,143 @@
   "fieldDirectionSet": "Nastavit",
   "@fieldDirectionSet": {
     "description": "Button label for setting a direction (0-360°) value."
+  },
+  "addressBlock": "Blok",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "Váš komentář",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "fieldHeightMeters": "Očekávána délka v metrech, např. 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "Očekávána délka ve stopách, např. 7'14\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldHeightAny": "Očekávána délka, např. 5.4 nebo 7'14\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "fieldPaymentAround": "Běžné možnosti v okolí",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "warningWrongMode": "Nesprávný režim, zkontrolujte duplikáty",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "fieldPaymentLocal": "Místní možnosti",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentUseGlobal": "Moje výchozí jsou lepší",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentUseSame": "Použít stejné značky pro mapování",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentTitle": "Platba kartou",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "warningUnsupported": "Tento typ objektu není podporován",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldPaymentChoose": "Vybrat jiné místní značky…",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldPaymentGlobal": "Globální výchozí",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "fieldNameLangSearch": "Najít jazyk",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "apiStatusUploadingNotes": "Nahrávání poznámek",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "drawUndo": "Zrušit",
+  "@drawUndo": {},
+  "drawChangeTool": "Změnit nástroj",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawRoad": "Silnice",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawWall": "Stěna",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawFence": "Plot",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawScribble": "Kreslení",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawEraser": "Guma",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "drawTrack": "Cesta",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawFootway": "Chodník",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawPath": "Stezka",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCycleway": "Cyklostezka",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawCyclewayShared": "Cyklopruh",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawPower": "Elektrické vedení",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawStream": "Potok",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "notesDelete": "Odstranit",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawCulvert": "Propust",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "Odstranit, ale ponechat adresu",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "fieldWebsiteQR": "Skenovat QR kód",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "editorDeleteBuilding": "Zbouráno",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
   }
 }

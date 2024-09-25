@@ -12,7 +12,7 @@ class ComboOption {
   const ComboOption(this.value, [this.label]);
 
   @override
-  String toString() => value;
+  String toString() => '$value($label)';
 }
 
 enum ComboType {
@@ -43,15 +43,16 @@ class ComboPresetField extends PresetField {
   final bool snakeCase;
 
   const ComboPresetField({
-    required String key,
-    required String label,
-    IconData? icon,
-    FieldPrerequisite? prerequisite,
+    required super.key,
+    required super.label,
+    super.icon,
+    super.prerequisite,
+    super.locationSet,
     required this.type,
     required this.options,
     this.customValues = true,
     this.snakeCase = true,
-  }) : super(key: key, label: label, icon: icon, prerequisite: prerequisite);
+  });
 
   bool get isSingularValue {
     return type == ComboType.regular || type == ComboType.type;

@@ -1,8 +1,5 @@
 import 'package:adaptive_dialog/adaptive_dialog.dart';
 import 'package:every_door/constants.dart';
-import 'package:every_door/fields/combo.dart';
-import 'package:every_door/fields/helpers/combo_page.dart';
-import 'package:every_door/helpers/payment_tags.dart';
 import 'package:every_door/providers/changes.dart';
 import 'package:every_door/providers/changeset_tags.dart';
 import 'package:every_door/providers/editor_settings.dart';
@@ -11,7 +8,6 @@ import 'package:every_door/providers/need_update.dart';
 import 'package:every_door/providers/notes.dart';
 import 'package:every_door/providers/osm_auth.dart';
 import 'package:every_door/providers/osm_data.dart';
-import 'package:every_door/providers/presets.dart';
 import 'package:every_door/screens/settings/about.dart';
 import 'package:every_door/screens/settings/account.dart';
 import 'package:every_door/screens/settings/changes.dart';
@@ -33,7 +29,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final osmData = ref.watch(osmDataProvider);
-    final login = ref.watch(authProvider);
+    final login = ref.watch(authProvider)?.displayName;
     final editorSettings = ref.watch(editorSettingsProvider);
     final forceLocation = ref.watch(forceLocationProvider);
     final hashtags = ref.watch(changesetTagsProvider).getHashtags();
@@ -43,12 +39,15 @@ class SettingsPage extends ConsumerWidget {
     final haveNotes = ref.watch(notesProvider).haveChanges;
 
     final purgeAll = osmData.obsoleteLength == 0;
-    final dataLength = NumberFormat.compact(
-            locale: Localizations.localeOf(context).toLanguageTag())
-        .format(osmData.length);
-    final obsoleteDataLength = NumberFormat.compact(
-            locale: Localizations.localeOf(context).toLanguageTag())
-        .format(osmData.obsoleteLength);
+    NumberFormat numFormat;
+    try {
+      numFormat = NumberFormat.compact(
+          locale: Localizations.localeOf(context).toLanguageTag());
+    } catch (e) {
+      numFormat = NumberFormat.compact(locale: 'en');
+    }
+    final dataLength = numFormat.format(osmData.length);
+    final obsoleteDataLength = numFormat.format(osmData.obsoleteLength);
 
     return Scaffold(
       appBar: AppBar(title: Text(loc.settingsTitle)),
@@ -60,7 +59,7 @@ class SettingsPage extends ConsumerWidget {
             tiles: [
               SettingsTile(
                 title: Text(loc.settingsLoginDetails),
-                description: Text(login ?? ''),
+                description: login != null ? Text(login) : null,
                 trailing: Icon(Icons.navigate_next),
                 onPressed: (context) {
                   Navigator.push(
@@ -116,9 +115,13 @@ class SettingsPage extends ConsumerWidget {
                     if (answer != OkCancelResult.ok) return;
                   }
 
-                  final count =
+                  int count =
                       await ref.read(osmDataProvider).purgeData(purgeAll);
                   if (purgeAll) {
+                    // Also delete unmodified notes.
+                    count += await ref
+                        .read(notesProvider)
+                        .purgeNotes(DateTime.now());
                     AlertController.show(loc.settingsPurgedAllTitle,
                         loc.settingsPurgedMessage(count), TypeAlert.success);
                   } else {
@@ -187,35 +190,6 @@ class SettingsPage extends ConsumerWidget {
                   },
                   initialValue: editorSettings.preferContact,
                 ),
-              SettingsTile(
-                title: Text(loc.settingsDefaultPayment),
-                value: Text(editorSettings.defaultPayment.join(', ')),
-                trailing: Icon(Icons.navigate_next),
-                onPressed: (context) async {
-                  final locale = Localizations.localeOf(context);
-                  final navigator = Navigator.of(context);
-                  final combo = await ref
-                      .read(presetProvider)
-                      .getField('payment_multi', locale);
-                  if (combo is ComboPresetField) {
-                    combo.options.removeWhere(
-                        (element) => kNotCards.contains(element.value));
-                  }
-                  final List<String>? newValues = await navigator.push(
-                    MaterialPageRoute(
-                      builder: (context) => ComboChooserPage(
-                        combo as ComboPresetField,
-                        editorSettings.defaultPayment,
-                      ),
-                    ),
-                  );
-                  if (newValues != null && newValues.isNotEmpty) {
-                    ref
-                        .read(editorSettingsProvider.notifier)
-                        .setDefaultPayment(newValues);
-                  }
-                },
-              ),
             ],
           ),
           if (defaultTargetPlatform == TargetPlatform.android)

@@ -104,6 +104,23 @@ class _BrowserPageState extends ConsumerState<BrowserPage> {
     ref.read(needMapUpdateProvider).trigger();
   }
 
+  bool canPopScope(bool updateProviders) {
+    if (ref.read(microZoomedInProvider) != null) {
+      if (updateProviders) {
+        ref.read(microZoomedInProvider.notifier).state = null;
+      }
+      return false;
+    } else if (!ref.read(trackingProvider) &&
+        ref.read(geolocationProvider) != null) {
+      if (updateProviders) {
+        ref.read(trackingProvider.notifier).state = true;
+      }
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final editorMode = ref.watch(editorModeProvider);
@@ -114,7 +131,15 @@ class _BrowserPageState extends ConsumerState<BrowserPage> {
     });
 
     ref.listen(editorModeProvider, (_, next) {
-      ref.read(microZoomedInProvider.state).state = null;
+      ref.read(microZoomedInProvider.notifier).state = null;
+    });
+
+    // Now we have to listen to both providers to change the pop state.
+    ref.listen(microZoomedInProvider, (_, next) {
+      setState(() {});
+    });
+    ref.listen(trackingProvider, (_, next) {
+      setState(() {});
     });
 
     final screenSize = MediaQuery.of(context).size;
@@ -141,17 +166,13 @@ class _BrowserPageState extends ConsumerState<BrowserPage> {
       }
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (ref.read(microZoomedInProvider) != null) {
-          ref.read(microZoomedInProvider.state).state = null;
-          return false;
-        } else if (!ref.read(trackingProvider) &&
-            ref.read(geolocationProvider) != null) {
-          ref.read(trackingProvider.state).state = true;
-          return false;
-        } else {
-          return true;
+    return PopScope(
+      canPop: canPopScope(false),
+      onPopInvokedWithResult: (didPop, Object? result) {
+        if (!didPop) {
+          setState(() {
+            canPopScope(true);
+          });
         }
       },
       child: Scaffold(
@@ -169,7 +190,7 @@ class _BrowserPageState extends ConsumerState<BrowserPage> {
                 child: FloatingActionButton(
                   child: Icon(Icons.add),
                   onPressed: () {
-                    ref.read(microZoomedInProvider.state).state = null;
+                    ref.read(microZoomedInProvider.notifier).state = null;
                     final location = ref.read(effectiveLocationProvider);
                     Navigator.push(
                       context,
@@ -179,6 +200,7 @@ class _BrowserPageState extends ConsumerState<BrowserPage> {
                           location: location,
                           closer: editorMode == EditorMode.micromapping,
                         ),
+                        fullscreenDialog: true,
                       ),
                     );
                   },

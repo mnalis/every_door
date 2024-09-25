@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final changesetTagsProvider = ChangeNotifierProvider((ref) => ChangesetTagsProvider());
+final changesetTagsProvider =
+    ChangeNotifierProvider((ref) => ChangesetTagsProvider());
 
 class ChangesetTagsProvider extends ChangeNotifier {
   static const _kHashtagsKey = 'hashtags';
@@ -19,7 +20,7 @@ class ChangesetTagsProvider extends ChangeNotifier {
 
   Map<String, String> generateChangesetTags(Iterable<OsmChange> changes) {
     final hashtags = getHashtags();
-    final maxCommentLength = 250 - hashtags.length;
+    final maxCommentLength = 230 - hashtags.length;
 
     String comment = _generator.generateComment(changes);
     if (comment.length > maxCommentLength) {
@@ -100,15 +101,22 @@ class _TypeCount {
   }
 
   String _getType(OsmChange change) {
-    final rawKey = getMainKey(change.getFullTags());
-    if (rawKey == null) return 'unknown object';
-    final value = change[rawKey]!;
+    final fullTags = change.getFullTags();
+    final rawKey = getMainKey(fullTags);
+    if (rawKey == null &&
+        detectKind(fullTags, {ElementKind.address}) == ElementKind.address) {
+      return 'address';
+    }
+    final value = fullTags[rawKey];
+    if (rawKey == null || value == null) return 'unknown object';
     // No use having "disused:shop" in a comment.
     final key = rawKey.substring(rawKey.indexOf(':') + 1);
     if (value == 'yes') return key;
     if ({'shop', 'office', 'building', 'entrance', 'club'}.contains(key))
       return '$value $key'; // school building
-    if (value.endsWith('s')) return value.substring(0, value.length - 1);
+    // Trim "services" and "lights", but not "cross".
+    if (value.endsWith('s') && !value.endsWith('ss'))
+      return value.substring(0, value.length - 1);
     return value;
   }
 }

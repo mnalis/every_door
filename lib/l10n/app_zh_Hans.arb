@@ -1,5 +1,5 @@
 {
-  "loadingStart": "正在初始化……",
+  "loadingStart": "初始化中…",
   "@loadingStart": {
     "description": "Initial message for the loading screen, virtually unseen."
   },
@@ -329,11 +329,11 @@
   "@filterNoAddresses": {
     "description": "An error message for no addresses nearby, used on filter pane and in address editor."
   },
-  "filterByAddress": "按地址",
+  "filterByAddress": "根据地址",
   "@filterByAddress": {
     "description": "Filter pane, label for choosing an address to filter by."
   },
-  "filterByFloor": "按楼层",
+  "filterByFloor": "根据楼层",
   "@filterByFloor": {
     "description": "Filter pane, label for choosing a floor to filter by."
   },
@@ -349,7 +349,7 @@
   "@editorMoreFields": {
     "description": "Title of a additional fields group in editor."
   },
-  "tagsAddTag": "添加一个标签",
+  "tagsAddTag": "添加标签",
   "@tagsAddTag": {
     "description": "Tags panel button for adding a new tag."
   },
@@ -680,14 +680,14 @@
   "@dataDownloadSuccessful": {
     "description": "Alert title for when the data was successfully downloaded."
   },
-  "dataDownloadedCount": "{count,plural, =1{已下载 {count} 要素。}, =few{已下载 {count} 个要素。}, =other{已下载 {count} 个要素。}}",
+  "dataDownloadedCount": "{count,plural, =1{已下载 {count} 要素。} few{已下载 {count} 个要素。} other{已下载 {count} 个要素。}}",
   "@dataDownloadedCount": {
     "description": "Alert contents when we've successfully downloaded some data.",
     "placeholders": {
       "count": {}
     }
   },
-  "settingsPurgedMessage": "{count,plural, =1{已清除 {count} 要素}, =few{已清除 {count} 个要素}, =other{已清除 {count} 个要素}}",
+  "settingsPurgedMessage": "{count,plural, =1{已清除 {count} 要素} few{已清除 {count} 个要素} other{已清除 {count} 个要素}}",
   "@settingsPurgedMessage": {
     "description": "Notification message after some cached elements were deleted.",
     "placeholders": {
@@ -706,7 +706,7 @@
   "@aboutVersionHistory": {
     "description": "Button title to open GitHub releases page."
   },
-  "aboutInstalledVersion": "安装的版本",
+  "aboutInstalledVersion": "已安装版本",
   "@aboutInstalledVersion": {
     "description": "Button description for installed app version."
   },
@@ -714,7 +714,7 @@
   "@aboutFAQ": {
     "description": "Title for the FAQ section on the About page."
   },
-  "changesCount": "{count,plural, =1{{count} 处变更}, =few{{count} 处变更}, =other{{count} 处变更}}",
+  "changesCount": "{count,plural, =1{{count} 处变更} few{{count} 处变更} other{{count} 处变更}}",
   "@changesCount": {
     "description": "Number of changed elements to display or to upload.",
     "placeholders": {
@@ -751,7 +751,7 @@
   "@faqEntrance": {},
   "faqTaggingContent": "为什么在编辑器中缺少一个物体？在微测绘模式下，何时显示这些白点？对象是如何排序的？\n\n所有这些问题的答案都在[good_tags。dart]（https://github。com/Zverik/every_door/blob/main/lib/helpers/good_tags。dart）。下面是你可以查看的内容：\n\n* 主标签的钥匙顺序 — 列表 `kMainKeys`。\n* 哪些对象被下载 — 函数 `isGoodTags`。\n* 哪些被认为是便利设施 — 函数 `isAmenityTags`。\n* 哪些点是以何种方式捕捉的 — 函数`detectSnap`。\n* 当一个微测绘对象不完整时 — 函数 `needsMoreInfo`。",
   "@faqTaggingContent": {},
-  "faqFloorsContent": "不。第一个是'addr:floor=3'的标签填充。即楼层数，因为它印在导航上并且常用。第二个没有这个标签，但有'level=3'。该数字是从零到'building:levels - 1'的连续楼层号。也就是说，在三层楼的建筑中，'addr:floor'值取决于哪个国家，但'level'始终都是0，1、2。\n\n以下是编辑器中的符号与这些标记的关系：\n\n* '2'： 'addr:floor=2' 和非空值 'level=*'。\n* '4/'： 'addr:floor=4'，但没有'level'标签。\n* '/1'： 'level=1'，但没有 'addr:floor' 标签。\n* '1/0'： 'addr:floor=1' + 'level=0' （附近有一个对象：具有相同的 'addr:floor'，但'level'不同，反之亦然）。",
+  "faqFloorsContent": "不是。第一个标记为 `addr:floor=3`。这是导航和常用的楼层表示方式。第二个没有这个标签，但是有 `level=3`。该数字是从零到 `building:levels - 1` 的连续楼层号。也就是说，在三层楼的建筑中，`addr:floor` 依照国家有不同定义，但 `level` 始终都是 0、1、2。\n\n以下是编辑器中的符号与这些标记的关系：\n\n* `2`：`addr:floor=2` 和非空值 `level=*`。\n* `4/`：`addr:floor=4`，但没有 `level` 标签。\n* `/1`：`level=1`，但没有 `addr:floor` 标签。\n* `1/0`：`addr:floor=1` + `level=0`（然后附近有一个对象：具有相同的 `addr:floor`，但 `level` 不同，反之亦然）。",
   "@faqFloorsContent": {},
   "faqChangeType": "如何更改便利设施的类型？",
   "@faqChangeType": {},
@@ -905,7 +905,7 @@
   "@versionsFetchError": {
     "description": "Message for when fetching element history fails due to unknown error."
   },
-  "settingsHashtags": "变更集主题标签",
+  "settingsHashtags": "变更集标签",
   "@settingsHashtags": {
     "description": "Settings entry for editing changeset hashtags."
   },
@@ -1121,7 +1121,7 @@
       }
     }
   },
-  "years": "{count,plural, =1{{count}年}, =few{{count}年}, =other{{count}年}}",
+  "years": "{count,plural, =1{{count}年} few{{count}年} other{{count}年}}",
   "@years": {
     "description": "Number of years. Used in the \"amenity is N years old\" message.",
     "placeholders": {
@@ -1133,5 +1133,143 @@
     "description": "Title for a grouped change tile for map notes and drawings."
   },
   "faqYellowContent": "入口模式中的非黄色标签和微映射模式中的白点意味着这些元素缺乏一些重要的属性。比如：\n\n* 建筑物应该有层数。\n* 入口应该有类型，对于楼梯，应该有平面范围。\n* 长椅应该有材料和靠背。\n* 树木应该有叶子的类型和周期。",
-  "@faqYellowContent": {}
+  "@faqYellowContent": {},
+  "addressBlock": "封锁",
+  "@addressBlock": {
+    "description": "Label for addr:block_number or addr_block. Keep it short."
+  },
+  "notesComment": "你的评论",
+  "@notesComment": {
+    "description": "Label for the note comment field."
+  },
+  "warningWrongMode": "模式错误，请检查是否存在重复项",
+  "@warningWrongMode": {
+    "description": "Warning when adding an amenity from the micromapping mode and vice-versa."
+  },
+  "warningUnsupported": "不支持此对象类型",
+  "@warningUnsupported": {
+    "description": "Warning message after choosing a preset for an unsupported object type. Meaning these kinds of objects are not visible on the map."
+  },
+  "fieldNameLangSearch": "查找语言",
+  "@fieldNameLangSearch": {
+    "description": "Hint for the text field for finding a language in a list."
+  },
+  "fieldHeightMeters": "以米为单位的预期长度，例如 5.4",
+  "@fieldHeightMeters": {
+    "description": "Validation message for when meters are expected."
+  },
+  "fieldHeightFeet": "以英尺为单位的预期长度，例如 7 '4\"",
+  "@fieldHeightFeet": {
+    "description": "Validation message for when feet are expected."
+  },
+  "fieldPaymentAround": "附近有常见选项",
+  "@fieldPaymentAround": {
+    "description": "Tile name for payment options found on the map."
+  },
+  "fieldPaymentTitle": "银行卡支付",
+  "@fieldPaymentTitle": {
+    "description": "Pane title for card payment options."
+  },
+  "fieldPaymentUseSame": "使用相同的标签进行地图绘制",
+  "@fieldPaymentUseSame": {
+    "description": "Button title for copying payment options around to the local settings."
+  },
+  "fieldPaymentUseGlobal": "我的预设值更好",
+  "@fieldPaymentUseGlobal": {
+    "description": "Button to copy global default to local payment settings."
+  },
+  "fieldPaymentChoose": "选择不同的本地化标签...",
+  "@fieldPaymentChoose": {
+    "description": "Button title for setting up different local payment options."
+  },
+  "fieldPaymentLocal": "本地选项",
+  "@fieldPaymentLocal": {
+    "description": "Tile name for stored local payment options."
+  },
+  "fieldPaymentGlobal": "全局预设",
+  "@fieldPaymentGlobal": {
+    "description": "Tile name for global payment defaults."
+  },
+  "drawEraser": "清除",
+  "@drawEraser": {
+    "description": "Tool description: eraser (to remove lines and map notes). Keep it short."
+  },
+  "notesDelete": "删除",
+  "@notesDelete": {
+    "description": "Button title for deleting a new note."
+  },
+  "drawChangeTool": "更换工具",
+  "@drawChangeTool": {
+    "description": "Tooltip for the button to change the drawing tool (e.g. to eraser or roads)."
+  },
+  "drawScribble": "涂画",
+  "@drawScribble": {
+    "description": "Tool description: scribble (type-less drawings). Keep it short."
+  },
+  "drawRoad": "道路",
+  "@drawRoad": {
+    "description": "Tool description: paved road. Keep it short."
+  },
+  "drawPath": "小路",
+  "@drawPath": {
+    "description": "Tool description: unpaved narrow footway. Keep it short."
+  },
+  "drawCyclewayShared": "单车车道",
+  "@drawCyclewayShared": {
+    "description": "Tool description: non-segregated cycleway. Keep it short."
+  },
+  "drawCycleway": "单车专用道",
+  "@drawCycleway": {
+    "description": "Tool description: segregated cycleway. Keep it short."
+  },
+  "drawFence": "围栏",
+  "@drawFence": {
+    "description": "Tool description: fence, see-through barrier. Keep it short."
+  },
+  "drawPower": "电线",
+  "@drawPower": {
+    "description": "Tool description: power line. Keep it short."
+  },
+  "drawStream": "溪流",
+  "@drawStream": {
+    "description": "Tool description: stream or other narrow waterway. Keep it short."
+  },
+  "editorDeleteKeepAddressButton": "删除，但保留地址",
+  "@editorDeleteKeepAddressButton": {
+    "description": "Button for keeping the address"
+  },
+  "editorDeleteBuilding": "已拆除",
+  "@editorDeleteBuilding": {
+    "description": "Button title to mark a building demolished."
+  },
+  "fieldWebsiteQR": "扫描二维码",
+  "@fieldWebsiteQR": {
+    "description": "Page title for the QR code scanner."
+  },
+  "drawTrack": "路辙",
+  "@drawTrack": {
+    "description": "Tool description: unpaved forestry/farm road. Keep it short."
+  },
+  "drawFootway": "人行道",
+  "@drawFootway": {
+    "description": "Tool description: paved/maintained footway. Keep it short."
+  },
+  "drawWall": "墙壁",
+  "@drawWall": {
+    "description": "Tool description: wall, non-see-through barrier. Keep it short."
+  },
+  "drawCulvert": "涵洞",
+  "@drawCulvert": {
+    "description": "Tool description: underground water pipe, culvert. Keep it short."
+  },
+  "apiStatusUploadingNotes": "上传注记",
+  "@apiStatusUploadingNotes": {
+    "description": "Text displayed when the app is uploading notes to the API."
+  },
+  "fieldHeightAny": "预期长度，如 5.4 或 7'4\"",
+  "@fieldHeightAny": {
+    "description": "Validation message for when meters or feet are expected."
+  },
+  "drawUndo": "还原",
+  "@drawUndo": {}
 }

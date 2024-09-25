@@ -1,30 +1,29 @@
 import 'package:every_door/constants.dart';
 import 'package:every_door/models/amenity.dart';
 import 'package:every_door/providers/editor_settings.dart';
+import 'package:every_door/providers/osm_data.dart';
 import 'package:flutter/material.dart';
 import 'package:every_door/models/field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum TextFieldCapitalize { no, asName, sentence, all }
+
 class TextPresetField extends PresetField {
   final TextInputType keyboardType;
-  final bool capitalize;
+  final TextFieldCapitalize capitalize;
   final int? maxLines;
 
   const TextPresetField({
-    required String key,
-    required String label,
-    IconData? icon,
-    String? placeholder,
-    FieldPrerequisite? prerequisite,
+    required super.key,
+    required super.label,
+    super.icon,
+    super.placeholder,
+    super.prerequisite,
+    super.locationSet,
     this.keyboardType = TextInputType.text,
-    this.capitalize = true,
+    this.capitalize = TextFieldCapitalize.sentence,
     this.maxLines,
-  }) : super(
-            key: key,
-            label: label,
-            icon: icon,
-            placeholder: placeholder,
-            prerequisite: prerequisite);
+  });
 
   @override
   Widget buildWidget(OsmChange element) => TextInputField(this, element);
@@ -72,14 +71,30 @@ class _TextInputFieldState extends ConsumerState<TextInputField> {
       keyboardType = editorSettings.keyboardType;
     }
 
+    TextCapitalization capitalization;
+    switch (widget.field.capitalize) {
+      case TextFieldCapitalize.no:
+        capitalization = TextCapitalization.none;
+        break;
+      case TextFieldCapitalize.sentence:
+        capitalization = TextCapitalization.sentences;
+        break;
+      case TextFieldCapitalize.all:
+        capitalization = TextCapitalization.characters;
+        break;
+      case TextFieldCapitalize.asName:
+        capitalization = ref.watch(osmDataProvider).capitalizeNames
+            ? TextCapitalization.words
+            : TextCapitalization.sentences;
+        break;
+    }
+
     return Padding(
       padding: EdgeInsets.only(right: 10.0),
       child: TextField(
         controller: _controller,
         keyboardType: keyboardType,
-        textCapitalization: widget.field.capitalize
-            ? TextCapitalization.sentences
-            : TextCapitalization.none,
+        textCapitalization: capitalization,
         decoration: InputDecoration(
           hintText: widget.field.placeholder,
           labelText: widget.field.icon != null ? widget.field.label : null,

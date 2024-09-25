@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class OsmAccountPage extends ConsumerStatefulWidget {
-  const OsmAccountPage({Key? key}) : super(key: key);
+  const OsmAccountPage({super.key});
 
   @override
   ConsumerState<OsmAccountPage> createState() => _OsmAccountPageState();
@@ -52,13 +52,15 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
     bool done = false;
     List<String>? result;
     while (!done) {
+      if (!mounted) return;
       result = await showTextInputDialog(
         context: context,
         title: loc.accountPasswordTitle,
         textFields: [
           DialogTextField(
             hintText: loc.accountFieldLogin,
-            initialText: result?[0] ?? ref.watch(authProvider),
+            initialText:
+                result?[0] ?? ref.watch(authProvider)?.displayName ?? '',
           ),
           DialogTextField(
             hintText: loc.accountFieldPassword,
@@ -75,11 +77,13 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
           updateDetails();
         } on ArgumentError {
           // Wrong login
-          await showAlertDialog(
-            context: context,
-            title: loc.accountAuthErrorTitle,
-            message: loc.accountAuthErrorMessage,
-          );
+          if (mounted) {
+            await showAlertDialog(
+              context: context,
+              title: loc.accountAuthErrorTitle,
+              message: loc.accountAuthErrorMessage,
+            );
+          }
         }
       } else {
         done = true;
@@ -92,6 +96,7 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
       await ref.read(authProvider.notifier).loginWithOAuth(context);
       updateDetails();
     } on Exception catch (e) {
+      if (!mounted) return;
       final loc = AppLocalizations.of(context)!;
       await showAlertDialog(
         context: context,
@@ -104,7 +109,7 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final login = ref.watch(authProvider);
+    final login = ref.watch(authProvider)?.displayName;
     Widget content;
     if (login == null) {
       // not logged in
@@ -123,16 +128,6 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
                   style: TextStyle(fontSize: 30.0),
                 ),
               )),
-          SizedBox(height: 20.0),
-          ElevatedButton(
-              onPressed: () {
-                showLoginDialog(context);
-              },
-              // style: ButtonStyle(backgroundColor: Colors.grey.shade100),
-              child: Text(
-                loc.accountLoginPassword,
-                style: TextStyle(fontSize: 18.0),
-              )),
         ],
       );
     } else {
@@ -141,6 +136,7 @@ class _OsmAccountPageState extends ConsumerState<OsmAccountPage> {
         children: [
           if (details?.avatar != null)
             CachedNetworkImage(imageUrl: details!.avatar!),
+          SizedBox(height: 20.0),
           Text(login),
           SizedBox(height: 20.0),
           if (details != null) ...[

@@ -1,6 +1,5 @@
 import 'package:country_coder/country_coder.dart';
 import 'package:every_door/constants.dart';
-import 'package:every_door/fields/address.dart';
 import 'package:every_door/fields/combo.dart';
 import 'package:every_door/fields/payment.dart';
 import 'package:every_door/fields/room.dart';
@@ -75,6 +74,7 @@ class PresetProvider {
       // final unpacked = io.GZipCodec().decode(bytes);
       await dbFile.writeAsBytes(bytes, flush: true);
       prefs.setString(kDbVersion, kAppVersion);
+      await clearComboCache();
     }
 
     _db = await openDatabase(dbFile.path);
@@ -211,7 +211,16 @@ class PresetProvider {
 
       if (seenPresets.contains(row['name'])) continue;
       seenPresets.add(row['name'] as String);
-      presets.add(Preset.fromJson(row));
+
+      final preset = Preset.fromJson(row);
+      if (location != null && preset.locationSet != null) {
+        // Test that the location is correct.
+        if (!locationMatcher(
+            location.longitude, location.latitude, preset.locationSet!))
+          continue;
+      }
+
+      presets.add(preset);
       if (presets.length >= kMaxShownPresets) break;
     }
     return presets;
@@ -300,6 +309,11 @@ class PresetProvider {
 
   static const kCachedCombosTableName = 'cached_combos';
 
+  Future<void> clearComboCache() async {
+    final database = await _ref.read(databaseProvider).database;
+    await database.delete(kCachedCombosTableName);
+  }
+
   Future<void> _updateComboCache(String key, Iterable<String> options) async {
     final database = await _ref.read(databaseProvider).database;
     await database.insert(
@@ -321,7 +335,7 @@ class PresetProvider {
   /// For each combo key, get and sort values according to downloaded data.
   Future<void> cacheComboOptions() async {
     if (processingCombos) return;
-    _logger.info('Starting global combo values caching');
+    _logger.fine('Starting global combo values caching');
     final timeStart = DateTime.now().millisecondsSinceEpoch;
     processingCombos = true;
     // Most used fields to be processed first.
@@ -369,21 +383,23 @@ class PresetProvider {
 
     final timeTook =
         ((DateTime.now().millisecondsSinceEpoch - timeStart) / 1000).round();
-    _logger.info('Finished processing combo options, took $timeTook seconds');
+    _logger.fine('Finished processing combo options, took $timeTook seconds');
   }
 
   Future<List<ComboOption>> _getComboOptions(Map<String, dynamic> field,
-      {bool useCache = true}) async {
+      {bool useCache = true, bool presetOnly = false}) async {
     final String typ = (field['typ']) as String;
-    bool needed = typ.endsWith("ombo") || typ == 'radio';
+    bool needed =
+        typ.endsWith("ombo") || typ == 'radio' || typ == 'defaultCheck';
     if (!needed) return const [];
+    if (typ == 'defaultCheck') presetOnly = true;
 
     final loc = field['loc_options'] != null
         ? jsonDecode(field['loc_options'])
         : <String, String>{};
 
     // Check in the combo cache.
-    if (useCache) {
+    if (!presetOnly && useCache) {
       final cached = await _fetchComboCache(field['key']);
       if (cached != null)
         return cached.map((e) => ComboOption(e, loc[e])).toList();
@@ -395,26 +411,33 @@ class PresetProvider {
       options.addAll((jsonDecode(field['options']) as List).cast<String>());
     }
 
-    // Get options from taginfo
-    final results =
-        await _db!.query('combos', where: 'key = ?', whereArgs: [field['key']]);
-    if (results.isNotEmpty) {
-      final existing = Set.of(options);
-      options.addAll((results.first['options'] as String)
-          .split('\\')
-          .where((v) => !existing.contains(v)));
-    }
+    if (!presetOnly) {
+      // Get options from taginfo.
+      // Store them separately to prioritize preset options.
+      final tiOptions = <String>[];
+      final results = await _db!
+          .query('combos', where: 'key = ?', whereArgs: [field['key']]);
+      if (results.isNotEmpty) {
+        final existing = Set.of(options);
+        tiOptions.addAll((results.first['options'] as String)
+            .split('\\')
+            .where((v) => !existing.contains(v)));
+      }
 
-    // Count values on the map.
-    final counter =
-        await _ref.read(osmDataProvider).getComboOptionsCount(field['key']);
-    if (counter.isNotEmpty) {
-      mergeSort(options,
-          compare: (a, b) => (counter[b] ?? 0).compareTo(counter[a] ?? 0));
-    }
+      // Count values on the map.
+      final counter =
+          await _ref.read(osmDataProvider).getComboOptionsCount(field['key']);
+      if (counter.isNotEmpty) {
+        mergeSort(options,
+            compare: (a, b) => (counter[b] ?? 0).compareTo(counter[a] ?? 0));
+        mergeSort(tiOptions,
+            compare: (a, b) => (counter[b] ?? 0).compareTo(counter[a] ?? 0));
+      }
+      options.addAll(tiOptions);
 
-    // Store the result in the cache.
-    _updateComboCache(field['key'], options);
+      // Store the result in the cache.
+      _updateComboCache(field['key'], options);
+    }
 
     // Return the result wrapped in a ComboOption.
     return options.map((e) => ComboOption(e, loc[e])).toList();
@@ -422,7 +445,8 @@ class PresetProvider {
 
   static const kSkipFields = {'opening_hours/covid19', 'not/name', 'shop'};
 
-  Future<Preset> getFields(Preset preset, {Locale? locale}) async {
+  Future<Preset> getFields(Preset preset,
+      {Locale? locale, LatLng? location}) async {
     if (preset.isFixme)
       return preset.withFields(
           [TextPresetField(key: 'fixme:type', label: 'Fixme type')], []);
@@ -456,18 +480,26 @@ class PresetProvider {
     List<PresetField> moreFields = [];
     final seenFields = <String>{};
     for (final row in results) {
-      if (seenFields.contains(row['name'])) continue;
-      if (kSkipFields.contains(row['name'])) continue;
-      seenFields.add(row['name'] as String);
+      final name = row['name'] as String;
+      if (seenFields.contains(name)) continue;
+      if (kSkipFields.contains(name)) continue;
+      seenFields.add(name);
 
       // Either build a field, or restore it from a cache.
       PresetField field;
-      if (_fieldCache.containsKey(row['name'])) {
-        field = _fieldCache[row['name']]!;
+      if (_fieldCache.containsKey(name)) {
+        field = _fieldCache[name]!;
       } else {
         final options = await _getComboOptions(row);
         field = fieldFromJson(row, options: options);
-        _fieldCache[row['name'] as String] = field;
+        _fieldCache[name] = field;
+      }
+
+      // Skip fields that don't fit the location.
+      if (field.locationSet != null && location != null) {
+        final matches = locationMatcher(
+            location.longitude, location.latitude, field.locationSet!);
+        if (!matches) continue;
       }
 
       // query options if needed
@@ -526,20 +558,21 @@ class PresetProvider {
     Map<String, PresetField> fields = {};
     final seenFields = <String>{};
     for (final row in results) {
-      if (seenFields.contains(row['name'])) continue;
-      seenFields.add(row['name'] as String);
+      final name = row['name'] as String;
+      if (seenFields.contains(name)) continue;
+      seenFields.add(name);
 
       // Either build a field, or restore it from a cache.
       PresetField field;
-      if (_fieldCache.containsKey(row['name'])) {
-        field = _fieldCache[row['name']]!;
+      if (_fieldCache.containsKey(name)) {
+        field = _fieldCache[name]!;
       } else {
         final options = await _getComboOptions(row);
         field = fieldFromJson(row, options: options);
-        _fieldCache[row['name'] as String] = field;
+        _fieldCache[name] = field;
       }
 
-      fields[row['name'] as String] = field;
+      fields[name] = field;
     }
     return fields;
   }
@@ -564,13 +597,13 @@ class PresetProvider {
     final List<String> stdFields =
         isPOI ? kStandardPoiFields : ['address', 'level'];
     final fields = await _getFields(stdFields, locale);
-    fields['address'] = AddressField(
-        label: await _getFieldLabel('address', locale) ?? 'Address');
     fields['wifi'] = WifiPresetField(
         label: await _getFieldLabel('internet_access', locale) ?? 'Wifi');
     fields['payment'] = PaymentPresetField(
         label: await _getFieldLabel('payment_multi', locale) ?? 'Accept cards');
-    fields['addr_door'] = RoomPresetField();
+    fields['addr_door'] = RoomPresetField(
+        label:
+            await _getFieldLabel('ref_room_number', locale) ?? 'Room Number');
     return stdFields.map((e) => fields[e]).whereType<PresetField>().toList();
   }
 

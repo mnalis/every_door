@@ -30,6 +30,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
   bool manualRef = false;
   bool putFlatsInUnit = false;
   bool showAddressForm = false;
+  bool saved = false;
   late final FocusNode _focus;
 
   static const kEntrancePreset = Preset(
@@ -42,6 +43,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
   void initState() {
     super.initState();
     _focus = FocusNode();
+    saved = false;
     if (widget.entrance != null) {
       entrance = widget.entrance!.copy();
     } else {
@@ -94,6 +96,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
         justTags: true);
     final changes = ref.read(changesProvider);
     changes.saveChange(entrance);
+    saved = true;
     ref.read(needMapUpdateProvider).trigger();
     if (pop) Navigator.pop(context);
   }
@@ -112,6 +115,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
       }) entrance.removeTag(k);
       changes.saveChange(entrance);
     }
+    saved = true;
     ref.read(needMapUpdateProvider).trigger();
     Navigator.pop(context);
   }
@@ -143,10 +147,9 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
     final refOptions = suggestRefs(entrance['addr:flats']);
     if (entrance['ref'] == null) refOptions.add(kManualOption);
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (widget.entrance != null) saveAndClose(false);
-        return true;
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && widget.entrance != null && !saved) saveAndClose(false);
       },
       child: SingleChildScrollView(
         child: SafeArea(
@@ -349,8 +352,10 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  PoiEditorPage(amenity: entrance)),
+                            builder: (context) =>
+                                PoiEditorPage(amenity: entrance),
+                            fullscreenDialog: true,
+                          ),
                         );
                       },
                       child: Text(loc.buildingMoreButton.toUpperCase() + '...'),
@@ -395,7 +400,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
                     ),
                     TextButton(
                       child:
-                      Text(MaterialLocalizations.of(context).okButtonLabel),
+                          Text(MaterialLocalizations.of(context).okButtonLabel),
                       onPressed: () {
                         if (true) {
                           saveAndClose();

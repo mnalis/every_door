@@ -7,12 +7,13 @@ class RadioPresetField extends PresetField {
   List<String> options;
 
   RadioPresetField({
-    required String key,
-    required String label,
-    IconData? icon,
-    FieldPrerequisite? prerequisite,
+    required super.key,
+    required super.label,
+    super.icon,
+    super.prerequisite,
+    super.locationSet,
     required this.options,
-  }) : super(key: key, label: label, prerequisite: prerequisite, icon: icon);
+  });
 
   @override
   Widget buildWidget(OsmChange element) => RadioFieldIntl(this, element);
