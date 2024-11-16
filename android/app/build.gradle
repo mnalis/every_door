@@ -38,7 +38,7 @@ android {
     }
 
     compileSdk 34
-    namespace "info.zverev.ilya.every_door"
+    namespace "info.zverev.ilya.every_door.mn"
 
     compileOptions {
         // https://stackoverflow.com/a/77629542/1297601

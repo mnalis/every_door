@@ -62,7 +62,7 @@ class TileCacher extends StateNotifier<TileCacherState> {
         if (cached == null || !cached.validTill.isAfter(DateTime.now())) {
           final headers = {
             'User-Agent':
-                'flutter_map (info.zverev.ilya.every_door; tile_cacher)'
+                'flutter_map (info.zverev.ilya.every_door.mn; tile_cacher)'
           };
           await TileCacheManager.instance
               .downloadFile(url, authHeaders: headers);

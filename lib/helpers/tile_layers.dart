@@ -133,7 +133,7 @@ class TileLayerOptions {
   bool tms = false;
   final List<String> subdomains = [];
   final Map<String, String> additionalOptions = const {'a': 'b'};
-  final String userAgentPackageName = 'info.zverev.ilya.every_door';
+  final String userAgentPackageName = 'info.zverev.ilya.every_door.mn';
 
   TileLayerOptions(Imagery imagery) {
     String url = imagery.url.replaceAll('{zoom}', '{z}');
